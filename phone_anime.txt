@@ -1,4 +1,10 @@
-ben 10
-dead cells
-machine
-prop hunt
+D:\emulated Aniyomi Phone\localanime\avatar_copy
+D:\emulated Aniyomi Phone\localanime\ben 10
+D:\emulated Aniyomi Phone\localanime\castle
+D:\emulated Aniyomi Phone\localanime\dead cells
+D:\emulated Aniyomi Phone\localanime\desk wars
+D:\emulated Aniyomi Phone\localanime\fallout
+D:\emulated Aniyomi Phone\localanime\last of us
+D:\emulated Aniyomi Phone\localanime\machine
+D:\emulated Aniyomi Phone\localanime\pokemon
+D:\emulated Aniyomi Phone\localanime\prop hunt

@@ -84,6 +84,18 @@ class Functions:
         total, used, free = shutil.disk_usage(directory)
         return round(free / (1024**3), 2)
     
+    def getUsedStorage(self, directory):
+        total_size = 0
+        # Walk through each folder, subfolder, and files
+        for dirpath, dirnames, filenames in os.walk(directory):
+            for filename in filenames:
+                # Get the full file path
+                file_path = os.path.join(dirpath, filename)
+                # Add the file size to the total size
+                if os.path.isfile(file_path):
+                    total_size += os.path.getsize(file_path)
+        return round(total_size / (1024**3), 2)
+                    
     def rootInit(self):
         """_summary_ Instantiates an instance of tkinter
         """

@@ -4,6 +4,7 @@ import os
 from functions import Functions
 from popups import Popups
 import shutil
+import storeAnimePage
 from tkinter import *
 from tkinter import ttk
 from tkinter import filedialog
@@ -129,42 +130,22 @@ class Button_functions:
 
     def storeAnime(self, function_obj, frm, labels, *args):
         data = function_obj.getInfofileData()
+        pops = Popups(INFOFILE)
         
-        # TODO: Check if pc directory is valid
+        # Check if the pc directory is valid
         if not os.path.exists(data['PC Directory']):
-            pops = Popups(INFOFILE)
-            choice = pops.invalidPCDirectory(frm)
-            if choice:
+            if pops.invalidPCDirectory(frm):
                 self.setPCDirectory(function_obj, labels)
-            else:
-                pass
-        else:
-            print("the pc directory was valid")
+
+        # Check if the phone directory is valid
+        elif not os.path.exists(data['Phone Directory']):
+            if pops.invalidPhoneDirectory(frm):
+                self.setPhoneDirectory(function_obj, labels)
+        
+        # Check if the pc directory is full
+        elif function_obj.getUsedStorage(data['PC Directory']) == function_obj.getAvailableStorage(data['PC Directory']):
+            _ = pops.invalidPhoneDirectory(frm)
             
-            
-        # TODO: Check if phone directory is valid
-
-        #total, used, free = shutil.disk_usage(directory)
-        #TODO: Check if the pc storage is full
-        #if data['PC Directory']
-            # NEED COMPONENTS
-            # pc directory
-            # phone directory
-
-            # How will I get them?
-                # load in the data
-                # pass in the data as a variable
-                # 
-
-
-
-        #TODO: Check if the phone storage is full
-
-
-
-
-
-
-
-        #functions_obj = func.Functions
-        #root_store, frm_store = functions_obj.root_init()
+        # Initiate the storeAnime window!
+        #else:
+            #storeAnimePage.main(function_obj, butt_func)

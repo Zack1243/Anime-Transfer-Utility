@@ -1,4 +1,3 @@
-import button_functions as func_but
 import json
 import math
 import os
@@ -40,6 +39,7 @@ class Functions:
             shutil.rmtree(folder)
     
     def gridVariableLabel(self, frm, label_cont, r, c):
+        print(str(label_cont))
         label = ttk.Label(frm, textvariable=label_cont)
         label.grid(row=r, column=c)
         return label
@@ -123,9 +123,8 @@ class Functions:
         }
         
         labels["PC Directory"].set(f"{data['PC Directory']}")
-        print(labels['PC Directory'])
+        print( "pc directory: " + str(labels['PC Directory']) )
         labels["Phone Directory"].set(f"{data['Phone Directory']}")
-        
         
         if os.path.exists(data['PC Directory']):
             labels["PC Storage Usage"].set("PC " + self.getStorageUsage(data["PC Directory"]))
@@ -139,20 +138,3 @@ class Functions:
             labels["Phone Storage Usage"].set("Current Phone Directory is invalid!")
 
         return root, frm, labels
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

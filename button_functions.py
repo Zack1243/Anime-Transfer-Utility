@@ -1,7 +1,6 @@
 import json
 import math
 import os
-from functions import Functions
 from popups import Popups
 import shutil
 import storeAnimePage

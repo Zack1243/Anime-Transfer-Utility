@@ -3,7 +3,7 @@ import math
 import os
 from popups import Popups
 import shutil
-import storeAnimePage
+#from storeAnime import StoreAnime
 from tkinter import *
 from tkinter import ttk
 from tkinter import filedialog
@@ -127,7 +127,7 @@ class Button_functions:
             i = i + 1
             print(f"User has failed to select a valid PC directory!")
 
-    def storeAnime(self, function_obj, frm, labels, *args):
+    def storeAnime(self, function_obj, func_but, frm, labels, data, *args):
         data = function_obj.getInfofileData()
         pops = Popups(INFOFILE)
         
@@ -140,6 +140,19 @@ class Button_functions:
         elif not os.path.exists(data['Phone Directory']):
             if pops.invalidPhoneDirectory(frm):
                 self.setPhoneDirectory(function_obj, labels)
+            
+        # TODO: Include this
+        #elif not function_obj.validAniyomiDirectory(pops, data['Phone Directory']):
+           # pass
+        
+        elif not os.path.exists(os.path.join(str(data["Phone Directory"]), "localanime").replace("/", "\\")):
+            if pops.noLocalAnimeDetected(frm):
+                self.setPhoneDirectory(function_obj, labels)
+
+        elif not os.path.exists(os.path.join(str(data["Phone Directory"]), "downloads").replace("/", "\\")):
+            if pops.noDownloadsDetected(frm):
+                self.setPhoneDirectory(function_obj, labels)
+            
         
         # Check if the pc directory is full
         elif function_obj.getUsedStorage(data['PC Directory']) == function_obj.getAvailableStorage(data['PC Directory']):
@@ -147,4 +160,5 @@ class Button_functions:
             
         # Initiate the storeAnime window!
         #else:
-            #storeAnimePage.main(function_obj, butt_func)
+            #storeAnimeObj = StoreAnime(INFOFILE)
+            #storeAnimeObj.main(function_obj, func_but, labels, data)

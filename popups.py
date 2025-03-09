@@ -125,6 +125,22 @@ class Popups:
         return deletePCShowsMessagebox
     
     
+    def duplicatesFound(self, frm, duplicateMessage, duplicateShows):
+        """_summary_ Initiates a popup asking if the user would like to delete the duplicate shows
+            frm (frm): The framework to show the popup over
+        Returns:
+            Choice (Boolean): The choice the user picks
+        """
+        confirm_show_deletion = messagebox.askyesno(
+            title="Duplicate titles found",
+            message=duplicateMessage,
+            icon="question",
+            parent=frm,
+            default="no"
+        )
+        return confirm_show_deletion
+    
+    
     def confirmDeleteShows(self, frm, text):
         """_summary_ Initiates a popup asking if the user is sure they want to delete the invalid show folders
             frm (frm): The framework to show the popup over
@@ -139,17 +155,21 @@ class Popups:
             default="no"
         )
         return confirm_show_deletion
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    
+    
+    def unstoredTitles(self, frm, text):
+        """_summary_ Some of your titles were not stored on the PC
+        Args:
+            frm (frm): The framework to show the popup over
+            text (string): The message to fill the message window with
+        Returns:
+            Choice (Boolean): The choice the user picks
+        """
+        confirm_show_deletion = messagebox.ok(
+            title="Unable to store some titles",
+            message=text,
+            icon="Error",
+            parent=frm,
+            default="no"
+        )
+        return confirm_show_deletion

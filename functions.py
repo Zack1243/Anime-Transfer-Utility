@@ -208,8 +208,43 @@ class Functions:
             return False
         return True
     
-    def getEmptyShows(self, srcDir):
-        """summary_ Checks if there are any empty show subfolders within a source
+    def getEmptyShows(self, localAnimeDirs):
+        """summary_ Finds empty shows and returns a list of them
+
+        Args:
+            showDirectory (directory): User's directory for their aniyomi folder
+        Returns:
+            emptyShows (list): list of empty shows
+        """
+        emptyFolders = []
+        for show in localAnimeDirs:
+                if not os.path.isdir(show):
+                    emptyFolders.append(show)
+                    continue
+                found = any(file.endswith((".mov", ".mkv", ".mp4")) for _, _, files in os.walk(show) for file in files)
+                if not found:
+                    emptyFolders.append(show)
+                    continue
+        return emptyFolders
+    
+    def listShows(self, text, shows):
+        """summary_ Returns a list of shows
+
+        Args:
+            text (string): string to add the shows to
+            shows (list): list of show directories
+        Returns:
+            text (string): string with shows added
+        """
+        for show in shows:
+            title = show.split('\\')[-1]
+            text += f"- {title}\n"
+        return text
+    
+    
+    
+    def cullEmptyShows(self, srcDir, frm, pops, data, *args):
+        """summary_ Identifies and eliminates empty shows with user's consent
 
         Args:
             phonedirectory (directory): User's directory for their aniyomi folder
@@ -225,38 +260,112 @@ class Functions:
         localAnimeDirs = [os.path.join(str(localAnimeDir), item).replace("/", "\\") for item in os.listdir(localAnimeDir)]
         
         
-        emptyFolders = []
-        for show in localAnimeDirs:
-                if not os.path.isdir(show):
-                    emptyFolders.append(show)
-                    continue
-                found = any(file.endswith((".mov", ".mkv", ".mp4")) for _, _, files in os.walk(show) for file in files)
-                if not found:
-                    emptyFolders.append(show)
-                    continue
-        return emptyFolders
+        emptyFolders = self.getEmptyShows(localAnimeDirs)
+        
+        if emptyFolders:
+            
+            # Remove shows from list of folders    
+            for show in emptyFolders:
+                localAnimeDirs.remove(show)
+
+            # Construct a message informing the user of the missing titles in their phone storage
+            missing_titles_warning_message = f"The following titles within {data['Phone Directory']} contain no .mkv, .mp4, or .mov files and cannot be stored. (You may wish to confirm if you are using the right Phone Directory)\n\n"
+            missing_titles_warning_message = self.listShows(missing_titles_warning_message, emptyFolders)
+            missing_titles_warning_message = missing_titles_warning_message + "\nWould you like to delete them?"
+
+            # Construct a message asking the user if they are sure whether they would like to delete the shows or not
+            if pops.deletePhoneShows(frm, missing_titles_warning_message):
+                confirm_deletion_message = "Are you sure you would like to delete the following titles?\n\n"
+                confirm_deletion_message = self.listShows(confirm_deletion_message , emptyFolders)
+
+                # If the user clicks yes, delete the shows
+                if pops.confirmDeleteShows(frm, confirm_deletion_message):
+                    for folder in emptyFolders:
+                        shutil.rmtree(folder)
+        return localAnimeDirs
     
-    def cullEmptyShows(self, frm, pops, data, emptyShows, *args):
-        """summary_ Prompts the user if they would like to delete the empty show folders
+    def getDuplicateShowMessage(self, duplicateShows):
+        # Construct a message informing the user of the missing titles in their phone storage
+        duplicateShowMessage = f"The following titles are duplicates of existing titles.\n\n"
+        duplicateShowMessage = self.listShows(duplicateShowMessage, duplicateShows)
+        duplicateShows += "\nWould you like to delete them?"
+        
+    def cullDuplicates(self, pop, frm, duplicateShows):
+        """summary_ Asks the user if they would like to get rid of any duplicate titles
+
+        Args:
+            pop (Object): an object of the Popups class
+            frm (Tkinter Frame): a Tkinter frame
+            duplicateShows (list): A list of directories of duplicate shows
+        """
+        duplicateMessage = self.getDuplicateShowMessage(duplicateShows)
+        
+        if pop.duplicatesFound(frm, duplicateMessage, duplicateShows):
+            confirm_deletion_message = "Are you sure you would like to delete the following titles?\n\n"
+            confirm_deletion_message = self.listShows(duplicateMessage, duplicateShows)
+            
+            if pop.confirmDeleteShows(self, frm, confirm_deletion_message):
+                for show in duplicateShows:
+                    shutil.rmtree(show)
+    
+    def getShowMap(self, frm, pop, localAnimeDirs, downloadsDir):
+        """summary_ Assembles a map of show directories and their respective titles. Also calls cullDuplicates to get rid of duplicate titles
+
+        Args:
+            frm (Tkinter Frame): a Tkinter frame
+            pop (Object): an object of the Popups class
+            duplicateShows (list): A list of show directories in localanime
+            downloadsDir (string): the downloads directory inside of aniyomi
+        
+        Returns:
+            showmap (map): a map of show directories and their respective titles
+        """
+        showMap = {}
+        duplicateShows = []
+        
+        for show in localAnimeDirs:
+            if show.split('\\')[-1] not in showMap:
+                showMap[show] = show.split('\\')[-1]
+            else:
+                title = show.split('\\')[-1]
+                print(f"Duplicate show found: {title}, skipping.")
+                duplicateShows[show] = show.split('\\')[-1]
+        
+        all_items = os.listdir(downloadsDir)
+
+        # Filter out only the subdirectories
+        sources = [item for item in all_items if os.path.isdir(os.path.join(downloadsDir, item))]
+        
+        for show in sources:
+            if show.split('\\')[-1] not in showMap:
+                showMap[show] = show.split('\\')[-1]
+            else:
+                title = show.split('\\')[-1]
+                print(f"Duplicate show found: {title}, skipping.")
+                duplicateShows.append(show)
+        
+        if duplicateShows:
+            # Get rid of any duplicate shows
+            self.cullDuplicates(pop, frm, duplicateShows)
+
+        return showMap
+        
+    #def storeSelected(my_listbox, root, data, ):
+        """summary_ Transfers selected titles into the Phone storage
 
         Args:
             emptyShows (list): List of empty show directories
         """
-        # Construct a message informing the user of the missing titles in their phone storage
-        missing_titles_warning_message = f"The following titles within {data['Phone Directory']} contain no .mkv, .mp4, or .mov files and cannot be stored. (You may wish to confirm if you are using the right Phone Directory)\n\n"
-        for show in emptyShows:
-            title = show.split('\\')[-1]
-            missing_titles_warning_message = missing_titles_warning_message + f"- {title}\n"
-        missing_titles_warning_message = missing_titles_warning_message + "\nWould you like to delete them?"
+        #for title in my_listbox.curselection():
+            
         
-        # Construct a message asking the user if they are sure whether they would like to delete the shows or not
-        if pops.deletePhoneShows(frm, missing_titles_warning_message):
-            confirm_deletion_message = "Are you sure you would like to delete the following titles?\n\n"
-            for show in emptyShows:
-                title = show.split('\\')[-1]
-                confirm_deletion_message = confirm_deletion_message + f"- {title}\n"
-            if pops.confirmDeleteShows(frm, confirm_deletion_message):
-                for folder in emptyShows:
-                    shutil.rmtree(folder)
         
-    
+        
+        
+        
+        #test = []
+        #for item in my_listbox.curselection():
+            #test.append(str.strip((my_listbox.get(item)))       )
+        #combined_text = ', '.join(test)
+        #combined_label = Label(root, text=combined_text)
+        #combined_label.grid()  # Place it below the individual labels

@@ -162,3 +162,52 @@ class Button_functions:
         #else:
             #storeAnimeObj = StoreAnime(INFOFILE)
             #storeAnimeObj.main(function_obj, func_but, labels, data)
+            
+            
+    def makeAlertMessage(self, obj, unstoredTitles):
+        text = "Unable to store the following titles:"
+        text = obj.listShows(text, unstoredTitles)
+        return text
+            
+    def alertUserUnmovedShows(self, frm, obj, pop, unStoredTitleDirs):
+        
+        # Message required
+        text = self.makeAlertMessage(obj, unStoredTitleDirs)
+        
+        # Popup required
+        pop.unstoredTitles(frm, text)
+        
+        
+            
+    def storeAnimeButton(self, frm, pop, obj, data, showListbox, showMap):
+        """summary_ Button to store anime
+        Args:
+            pop (Object): a Popup object
+            obj (Object): a Functions object
+            labels (dict): a dictionary of StringVar labels
+            showListbox (Listbox): a listbox of shows
+            showMap (map): a map of show directories and titles
+        
+        Returns:
+            showmap (map): a map of show directories and their respective titles
+        """
+        unStoredTitles = []
+        
+        dst = data['PC Directory']
+        
+        for title in showListbox.curselection():
+            titleDir = showMap.get(title)
+            
+            if titleDir is None:
+                unStoredTitles.append(title.split('\\')[-1])
+                
+            if titleDir.split('\\')[-2] == "localanime":
+                # We found out that its a local download can directly move
+                dst = os.path.join(dst, showMap.get(title).split('\\')[-1])
+                
+            # we will assume our title is in a source within the downloads folder
+            else:
+                dst = os.path.join(dst, showMap.get(title).split('\\')[-2], showMap.get(title).split('\\')[-1])
+            
+            shutil.move(title, dst)
+        self.alertUserUnmovedShows(frm, pop, obj, unStoredTitles)

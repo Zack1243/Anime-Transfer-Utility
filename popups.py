@@ -165,7 +165,7 @@ class Popups:
         Returns:
             Choice (Boolean): The choice the user picks
         """
-        confirm_show_deletion = messagebox.ok(
+        confirm_show_deletion = messagebox.askyesno(
             title="Unable to store some titles",
             message=text,
             icon="Error",
@@ -173,3 +173,19 @@ class Popups:
             default="no"
         )
         return confirm_show_deletion
+    
+    def noTitlesToStore(self, frm):
+        """_summary_ Initiate a popup telling the user that there were no titles to store
+        Args:
+            frm (frm): The framework to show the popup over
+        Returns:
+            Choice (Boolean): The choice the user picks
+        """
+        noTitlesToStore = messagebox.askokcancel(
+            title="No titles to store in aniyomi directory!",
+            message="Unable to find any titles to store!\nSelect a new directory at the mainpage",
+            icon="Error",
+            parent=frm,
+            default="yes"
+        )
+        return noTitlesToStore

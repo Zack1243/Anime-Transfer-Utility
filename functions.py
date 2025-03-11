@@ -243,7 +243,7 @@ class Functions:
     
     
     
-    def cullEmptyShows(self, srcDir, frm, pops, data, *args):
+    def cullEmptyShows(self, frm, pops, data, emptyShows, *args):
         """summary_ Identifies and eliminates empty shows with user's consent
 
         Args:
@@ -251,38 +251,18 @@ class Functions:
         Returns:
             Boolean (T/F): if it's valid of the file
         """
-        
-        # Get localanime directory
-        localAnimeDir = os.path.join(str(srcDir), "localanime").replace("/", "\\")
-        
-        
-        # Get list of show directories in localAnime
-        localAnimeDirs = [os.path.join(str(localAnimeDir), item).replace("/", "\\") for item in os.listdir(localAnimeDir)]
-        
-        
-        emptyFolders = self.getEmptyShows(localAnimeDirs)
-        
-        if emptyFolders:
-            
-            # Remove shows from list of folders    
-            for show in emptyFolders:
-                localAnimeDirs.remove(show)
-
-            # Construct a message informing the user of the missing titles in their phone storage
-            missing_titles_warning_message = f"The following titles within {data['Phone Directory']} contain no .mkv, .mp4, or .mov files and cannot be stored. (You may wish to confirm if you are using the right Phone Directory)\n\n"
-            missing_titles_warning_message = self.listShows(missing_titles_warning_message, emptyFolders)
-            missing_titles_warning_message = missing_titles_warning_message + "\nWould you like to delete them?"
-
-            # Construct a message asking the user if they are sure whether they would like to delete the shows or not
-            if pops.deletePhoneShows(frm, missing_titles_warning_message):
-                confirm_deletion_message = "Are you sure you would like to delete the following titles?\n\n"
-                confirm_deletion_message = self.listShows(confirm_deletion_message , emptyFolders)
-
-                # If the user clicks yes, delete the shows
-                if pops.confirmDeleteShows(frm, confirm_deletion_message):
-                    for folder in emptyFolders:
-                        shutil.rmtree(folder)
-        return localAnimeDirs
+        # Construct a message informing the user of the missing titles in their phone storage
+        missing_titles_warning_message = f"The following titles within {data['Phone Directory']} contain no .mkv, .mp4, or .mov files and cannot be stored. (You may wish to confirm if you are using the right Phone Directory)\n\n"
+        missing_titles_warning_message = self.listShows(missing_titles_warning_message, emptyShows)
+        missing_titles_warning_message = missing_titles_warning_message + "\nWould you like to delete them?"
+        # Construct a message asking the user if they are sure whether they would like to delete the shows or not
+        if pops.deletePhoneShows(frm, missing_titles_warning_message):
+            confirm_deletion_message = "Are you sure you would like to delete the following titles?\n\n"
+            confirm_deletion_message = self.listShows(confirm_deletion_message , emptyShows)
+            # If the user clicks yes, delete the shows
+            if pops.confirmDeleteShows(frm, confirm_deletion_message):
+                for folder in emptyShows:
+                    shutil.rmtree(folder)
     
     def getDuplicateShowMessage(self, duplicateShows):
         # Construct a message informing the user of the missing titles in their phone storage
@@ -308,7 +288,8 @@ class Functions:
                 for show in duplicateShows:
                     shutil.rmtree(show)
     
-    def getShowMap(self, frm, pop, localAnimeDirs, downloadsDir):
+    
+    def getShowMap(self, frm, pop, localAnimeDirs, sourceTitleDirs):
         """summary_ Assembles a map of show directories and their respective titles. Also calls cullDuplicates to get rid of duplicate titles
 
         Args:
@@ -322,34 +303,130 @@ class Functions:
         """
         showMap = {}
         duplicateShows = []
-        
-        for show in localAnimeDirs:
-            if show.split('\\')[-1] not in showMap:
-                showMap[show] = show.split('\\')[-1]
-            else:
-                title = show.split('\\')[-1]
-                print(f"Duplicate show found: {title}, skipping.")
-                duplicateShows[show] = show.split('\\')[-1]
-        
-        all_items = os.listdir(downloadsDir)
+        if localAnimeDirs:
+            for show in localAnimeDirs:
+                if show.split('\\')[-1] not in showMap:
+                    showMap[show] = show.split('\\')[-1]
+                else:
+                    title = show.split('\\')[-1]
+                    print(f"Duplicate show found: {title}, skipping.")
+                    duplicateShows[show] = show.split('\\')[-1]
+                
+        if sourceTitleDirs:
+            
+            for show in sourceTitleDirs:
+                if show.split('\\')[-1] not in showMap:
+                    print(f"APPENDED TITLE: {show}")
+                    showMap[show] = show.split('\\')[-1]
+                else:
+                    title = show.split('\\')[-1]
+                    print(f"Duplicate show found: {title}, skipping.")
+                    duplicateShows.append(show)
 
-        # Filter out only the subdirectories
-        sources = [item for item in all_items if os.path.isdir(os.path.join(downloadsDir, item))]
-        
-        for show in sources:
-            if show.split('\\')[-1] not in showMap:
-                showMap[show] = show.split('\\')[-1]
-            else:
-                title = show.split('\\')[-1]
-                print(f"Duplicate show found: {title}, skipping.")
-                duplicateShows.append(show)
-        
         if duplicateShows:
             # Get rid of any duplicate shows
             self.cullDuplicates(pop, frm, duplicateShows)
 
         return showMap
         
+            
+    def isEmpty(self, title):
+        if not os.path.isdir(title):
+            return False
+        
+        found = any(file.endswith((".mov", ".mkv", ".mp4")) for _, _, files in os.walk(title) for file in files)
+        if not found:
+            return True
+        return False
+        
+    
+    def checkValid(self, showMap, titleList):
+        invalidTitles = []
+        duplicateTitles = []
+        emptyTitles = []
+        
+        
+        for title in titleList:
+            # Check if the path exists
+            if not os.path.exists(title):
+                invalidTitles.append(title)
+                
+            # Check if the path is an empty directory
+            elif self.isEmpty(title):
+                emptyTitles.append(title)
+                
+            # Check if the path is a duplicate of an existing title
+            elif title.split('\\')[-1] not in showMap:
+                showMap[title] = title.split('\\')[-1]
+            else:
+                duplicateTitles.append(title)
+                
+        return invalidTitles, duplicateTitles, emptyTitles, showMap
+        
+    def isValidSources(self, downloadedSourcesDirs):
+        sourceTitleDirs = []
+        for source in downloadedSourcesDirs:
+            if os.path.exists(source):
+                sourceTitles = [os.path.join(str(source), item).replace("/", "\\") for item in os.listdir(source)]
+                if sourceTitles:
+                    for sourceTitle in sourceTitles:
+                            if os.path.exists(sourceTitle):
+                                if sourceTitle not in downloadedSourcesDirs:
+                                    sourceTitleDirs.append(sourceTitle)
+        return sourceTitleDirs
+                
+    
+    def getValidShowMap(self, frm, obj, func_but, pop, phoneDir, labels):
+        # Get local anime directory
+        localAnimeDir = os.path.join(str(phoneDir), "localanime").replace("/", "\\")
+        
+        # Get downloads directory
+        downloadsDir = os.path.join(str(phoneDir), "downloads").replace("/", "\\")
+        
+        # Get a list of the title directories in the 'local anime' folder
+        localAnimeTitleDirs = [os.path.join(str(localAnimeDir), item).replace("/", "\\") for item in os.listdir(localAnimeDir)]
+        
+        # Get a list of directories of the sources in the downloads folder
+        downloadedSourcesDirs = [os.path.join(str(downloadsDir), item).replace("/", "\\") for item in os.listdir(downloadsDir)]
+        
+        # Instantiate a list of title directories in the source directories
+        sourceTitleDirs = []
+        
+        # Instanitate a list of invalid directories
+        invalidSources = []
+        
+        # Instantiate a showMap that matches titles to their directories
+        showMap = dict([])
+        
+        if downloadedSourcesDirs:
+            # Check if all sources are valid
+            sourceTitleDirs = self.isValidSources(downloadedSourcesDirs)
+        
+        if sourceTitleDirs and localAnimeTitleDirs:
+            invalidTitles, duplicateTitles, emptyTitles, showMap = self.checkValid(showMap, localAnimeTitleDirs + sourceTitleDirs)
+        elif sourceTitleDirs:
+            invalidTitles, duplicateTitles, emptyTitles, showMap = self.checkValid(showMap, sourceTitleDirs)
+        elif localAnimeTitleDirs:
+            invalidTitles, duplicateTitles, emptyTitles, showMap = self.checkValid(showMap, localAnimeTitleDirs)
+        else:
+            _ = pop.noTitlesToStore(frm)
+            return showMap
+        return invalidTitles, duplicateTitles, emptyTitles, showMap
+    
+    
+    
+    def printInvalidSources(invalidSources):
+        print("....................................")       
+        print("The following sources are invalid....")
+        for source in invalidSources:
+            print(source)
+        print("....................................")
+        
+        
+        
+    
+    
+    
     #def storeSelected(my_listbox, root, data, ):
         """summary_ Transfers selected titles into the Phone storage
 

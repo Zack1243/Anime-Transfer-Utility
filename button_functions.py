@@ -176,10 +176,32 @@ class Button_functions:
         
         # Popup required
         pop.unstoredTitles(frm, text)
+    
+    
+    def buildProgressBar(self, root, obj):
+        """summary_ Instantiates a progressbar
+
+        Args:
+            file (file): File seeking to be instantiated
+        Returns:
+            progressLabels (map): The map of labels corresponding to the progress bar
+        """
         
+        progressLabels = {
+            "Summary": StringVar(), # Transfering NUM files to DIRECTORY
+            "Percentage": StringVar(), # NUM% complete
+            "numFiles": StringVar(), # Transfering file NUM/TOTAL
+            "Name": StringVar(), # Name: NAME
+            "sizeTransfered": StringVar(), # Transfered NUM / TOTAL SIZE
+        }
+        progressLabels["Percentage"].set("0%")
+        
+        myProgressBar = obj.gridProgressBar(root, 1, 0)
+
+        return myProgressBar, progressLabels
         
             
-    def storeAnimeButton(self, frm, pop, obj, data, showListbox, showMap):
+    def storeAnimeButton(self, root, frm, pop, obj, data, labels, showListbox, showMap):
         """summary_ Button to store anime
         Args:
             pop (Object): a Popup object
@@ -188,26 +210,129 @@ class Button_functions:
             showListbox (Listbox): a listbox of shows
             showMap (map): a map of show directories and titles
         
-        Returns:
-            showmap (map): a map of show directories and their respective titles
+        #Returns:
+            #showmap (map): a map of show directories and their respective titles
         """
         unStoredTitles = []
-        
+        print(showListbox.curselection())
+
         dst = data['PC Directory']
-        
-        for title in showListbox.curselection():
-            titleDir = showMap.get(title)
+        if showListbox.curselection():
+            #TODO: make a progress bar  
+            myProgressBar, progressLabels = self.buildProgressBar(root, obj)
+            #01: PAUSE
+            #02: CANCEL
+            numFiles = len(showListbox.curselection())
             
-            if titleDir is None:
-                unStoredTitles.append(title.split('\\')[-1])
-                
-            if titleDir.split('\\')[-2] == "localanime":
-                # We found out that its a local download can directly move
-                dst = os.path.join(dst, showMap.get(title).split('\\')[-1])
-                
-            # we will assume our title is in a source within the downloads folder
-            else:
-                dst = os.path.join(dst, showMap.get(title).split('\\')[-2], showMap.get(title).split('\\')[-1])
             
-            shutil.move(title, dst)
-        self.alertUserUnmovedShows(frm, pop, obj, unStoredTitles)
+            print(f"Selected number of files: {numFiles}")
+            
+            
+            
+            progressLabels['numFiles'].set(f"Storing {numFiles} in {data['PC Directory']}")
+            
+            totalSize = 0
+            showSize = []
+            showNumSize = []
+            
+            print(showMap)
+            reversed_showMap = {value: key for key, value in showMap.items()}
+            
+            for index in showListbox.curselection():
+                
+                
+                title = showListbox.get(index)
+                print(f"TITLE: {title}")
+                
+                
+                
+                # Find the directory of the title
+                titleDir = reversed_showMap[title]
+                
+                
+                
+                
+                
+                print(f"Title Directory: {titleDir}")
+                
+                
+                # Get the size of the title
+                size = obj.getSize(titleDir)
+                
+                # Add size of the file to the total size
+                totalSize += size
+                
+                # Adjust the units of size to be a string not an int
+                sizeWUnit = obj.convert(size)
+                
+                
+                
+                showNumSize[f"{title}"] = size
+                
+                # Append the show to the showSize map
+                showSize[f"{title}"] = sizeWUnit
+                
+            # Adjust the totalSize to be a string with the actual units
+                
+            totalSize = obj.convert(totalSize)
+            
+            index = 1
+            
+            amountStored = 0
+            
+            for title in showListbox.curselection():
+                
+                
+                titleDir = reversed_showMap.get(title)
+                titleSize = showSize[f"{title}"]
+
+                if titleDir.split('\\')[-2] == "localanime":
+                    # We found out that its a local download can directly move
+                    dst = os.path.join(dst, showMap.get(title).split('\\')[-1])
+
+                # we will assume our title is in a source within the downloads folder
+                else:
+                    #PC Directory -> downloads -> source -> title
+                    dst = os.path.join(dst, "downloads", showMap.get(title).split('\\')[-2], showMap.get(title).split('\\')[-1])
+                    
+                
+                myProgressBar['numFiles'].set(f"Storing file {index} / {numFiles}")
+                
+                
+                myProgressBar['Name'].set(f"Currently storing title: {title}")
+                
+                shutil.move(title, dst)
+                
+                # Update how much has been stored
+                myProgressBar['sizeTransfered'].set(f"Stored {titleSize} / {totalSize}")
+                
+                # Update the amount of data that has been stored
+                amountStored += showNumSize[f"{title}"]
+                
+                percentage = round((amountStored / totalSize) * 100, 2)
+                progressLabels["Percentage"].set(f"{percentage}%")
+                
+                index += 1
+
+
+            for index in reversed(showListbox.curselection()):
+                
+                title = showListbox.get(index)
+                # Remove from the dictionary
+                if title in showMap:
+                    del showMap[title]
+                    # TODO: Delete debugging statements
+                    print(f"Removed {title} from showMap.")
+                # Remove item from the Listbox
+                showListbox.delete(index)
+                
+                # TODO: Delete debugging statments
+                print(f"Deleted {title} from Listbox.")
+                
+            #all_entries = [showListbox.get(index) for index in range(showListbox.size())]
+
+            self.alertUserUnmovedShows(frm, pop, obj, unStoredTitles)
+            #return showMap
+            # Update the storage within the directory of the phone and pc
+        #else:
+            #return showMap

@@ -125,12 +125,13 @@ class Popups:
         return deletePCShowsMessagebox
     
     
-    def duplicatesFound(self, frm, duplicateMessage, duplicateShows):
+    def duplicatesFound(self, frm, duplicateMessage):
         """_summary_ Initiates a popup asking if the user would like to delete the duplicate shows
             frm (frm): The framework to show the popup over
         Returns:
             Choice (Boolean): The choice the user picks
         """
+        
         confirm_show_deletion = messagebox.askyesno(
             title="Duplicate titles found",
             message=duplicateMessage,
@@ -139,6 +140,23 @@ class Popups:
             default="no"
         )
         return confirm_show_deletion
+    
+    def dirToCullDups(self, frm, text):
+        """_summary_ Initiates a popup asking if the user would like to delete the duplicate shows from local anime or downloads folders
+            frm (frm): The framework to show the popup over
+            text (String): The message to show in the popup window
+        Returns:
+            Choice (Boolean): The choice the user picks
+        """
+        
+        whichDirtoCull = messagebox.askyesnocancel(
+            title="Which Directory would you like to delete the dups from?",
+            message=text,
+            icon="question",
+            parent=frm,
+            default="no"
+        )
+        return whichDirtoCull
     
     
     def confirmDeleteShows(self, frm, text):

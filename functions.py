@@ -60,13 +60,32 @@ class Functions:
         for show in titles:
             my_listbox.insert(0, show)
             #END??? instead of the 0 above
+        return my_listbox
     
     def gridEntrybox(self, root, r, c):
         my_entrybox = Entry(root)
         my_entrybox.grid()
         
+        
+    def getSize(self, titleDir):
+        total_size = 0
+        # Walk through each folder, subfolder, and files
+        for dirpath, dirnames, filenames in os.walk(titleDir):
+            for filename in filenames:
+                # Get the full file path
+                file_path = os.path.join(dirpath, filename)
+                # Add the file size to the total size
+                if os.path.isfile(file_path):
+                    total_size += os.path.getsize(file_path)
+
+        return total_size
+        
+    
     # TODO:
-    #def gridProgressBar(self, frm, label_cont, r, c):
+    def gridProgressBar(self, root, r, c):
+        myProgressBar = ttk.Progressbar(root, orient="horizontal", length=300, mode='determinate')
+        myProgressBar.grid(row=r, column=c)
+        return myProgressBar
         
     
     def gridButton(self, frm, button_lab, button_function, r, c):
@@ -78,6 +97,18 @@ class Functions:
         with open(INFOFILE, 'r') as json_file:
             data = json.load(json_file)
         return data
+    
+    
+    def convert(self, size):
+        size_name = ("B", "KB", "MB", "GB", "TB")
+        i = int(math.floor(math.log(size, 1024)))
+        p = math.pow(1024, i)
+        s = round(size / p, 2)
+
+        return f"{s} {size_name[i]}"
+        
+        
+        
         
     def getStorageUsage(self, directory):
         total_size = 0
@@ -268,7 +299,8 @@ class Functions:
         # Construct a message informing the user of the missing titles in their phone storage
         duplicateShowMessage = f"The following titles are duplicates of existing titles.\n\n"
         duplicateShowMessage = self.listShows(duplicateShowMessage, duplicateShows)
-        duplicateShows += "\nWould you like to delete them?"
+        duplicateShowMessage += "\nWould you like to delete them?"
+        return duplicateShowMessage
         
     def cullDuplicates(self, pop, frm, duplicateShows):
         """summary_ Asks the user if they would like to get rid of any duplicate titles
@@ -279,14 +311,18 @@ class Functions:
             duplicateShows (list): A list of directories of duplicate shows
         """
         duplicateMessage = self.getDuplicateShowMessage(duplicateShows)
-        
-        if pop.duplicatesFound(frm, duplicateMessage, duplicateShows):
-            confirm_deletion_message = "Are you sure you would like to delete the following titles?\n\n"
-            confirm_deletion_message = self.listShows(duplicateMessage, duplicateShows)
-            
-            if pop.confirmDeleteShows(self, frm, confirm_deletion_message):
-                for show in duplicateShows:
-                    shutil.rmtree(show)
+        print(duplicateMessage)
+        if pop.duplicatesFound(frm, duplicateMessage):
+            text = "Would you like to delete from 'local anime'?\n(hit no to delete from downloads or cancel to cancel deletion)"
+            if pop.dirToCullDups(frm, text):
+                confirm_deletion_message = "Are you ABSOLUTELY sure you would like to delete the following titles?\nfinal warning I promise :)\n\n"
+                confirm_deletion_message = self.listShows(duplicateMessage, duplicateShows)
+
+                
+                # TODO: ADD A SCROLLBOX SELECTION FOR THE USER TO DELETE FROM
+                if pop.confirmDeleteShows(self, frm, confirm_deletion_message):
+                    for show in duplicateShows:
+                        shutil.rmtree(show)
     
     
     def getShowMap(self, frm, pop, localAnimeDirs, sourceTitleDirs):
@@ -356,7 +392,9 @@ class Functions:
                 emptyTitles.append(title)
                 
             # Check if the path is a duplicate of an existing title
-            elif title.split('\\')[-1] not in showMap:
+            elif title.split('\\')[-1] not in showMap.values():
+                
+                show = title.split('\\')[-1]
                 showMap[title] = title.split('\\')[-1]
             else:
                 duplicateTitles.append(title)

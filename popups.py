@@ -186,7 +186,7 @@ class Popups:
         confirm_show_deletion = messagebox.askyesno(
             title="Unable to store some titles",
             message=text,
-            icon="Error",
+            icon="error",
             parent=frm,
             default="no"
         )
@@ -202,7 +202,7 @@ class Popups:
         noTitlesToStore = messagebox.askokcancel(
             title="No titles to store in aniyomi directory!",
             message="Unable to find any titles to store!\nSelect a new directory at the mainpage",
-            icon="Error",
+            icon="error",
             parent=frm,
             default="yes"
         )

@@ -199,7 +199,6 @@ class Button_functions:
         myProgressBar = obj.gridProgressBar(root, 1, 0)
 
         return myProgressBar, progressLabels
-        
             
     def storeAnimeButton(self, root, frm, pop, obj, data, labels, showListbox, showMap):
         """summary_ Button to store anime
@@ -214,46 +213,38 @@ class Button_functions:
             #showmap (map): a map of show directories and their respective titles
         """
         unStoredTitles = []
-        print(showListbox.curselection())
-
         dst = data['PC Directory']
+        totalSize = 0
+        showSize = dict([])
+        showNumSize = dict([])
+        reversed_showMap = {value: key for key, value in showMap.items()}
+        widgets = root.winfo_children()  # Get all widgets in the root
+            
+        
         if showListbox.curselection():
-            #TODO: make a progress bar  
-            myProgressBar, progressLabels = self.buildProgressBar(root, obj)
-            #01: PAUSE
-            #02: CANCEL
+            if len(widgets) < 4:
+                myProgressBar, progressLabels = self.buildProgressBar(root, obj)
+                numFilesLabel, nameLabel, sizeTransferedLabel, percentageLabel = obj.gridProgressbarLabels(frm, progressLabels)
+            else:
+                numFilesLabel, nameLabel, sizeTransferedLabel, percentageLabel = obj.getProgressbarLabels(root, frm, pop, obj, data, labels, showListbox, showMap)
+            
             numFiles = len(showListbox.curselection())
-            
-            
-            print(f"Selected number of files: {numFiles}")
-            
-            
+
             
             progressLabels['numFiles'].set(f"Storing {numFiles} in {data['PC Directory']}")
+
             
-            totalSize = 0
-            showSize = []
-            showNumSize = []
             
-            print(showMap)
-            reversed_showMap = {value: key for key, value in showMap.items()}
+            
+            
             
             for index in showListbox.curselection():
                 
                 
                 title = showListbox.get(index)
-                print(f"TITLE: {title}")
-                
-                
-                
+
                 # Find the directory of the title
                 titleDir = reversed_showMap[title]
-                
-                
-                
-                
-                
-                print(f"Title Directory: {titleDir}")
                 
                 
                 # Get the size of the title
@@ -267,49 +258,57 @@ class Button_functions:
                 
                 
                 
-                showNumSize[f"{title}"] = size
+                showNumSize[title] = size
                 
                 # Append the show to the showSize map
-                showSize[f"{title}"] = sizeWUnit
+                showSize[title] = sizeWUnit
                 
             # Adjust the totalSize to be a string with the actual units
-                
+            storeSize = totalSize
             totalSize = obj.convert(totalSize)
             
             index = 1
             
             amountStored = 0
             
-            for title in showListbox.curselection():
-                
-                
+            for index in showListbox.curselection():
+                title = showListbox.get(index)
+                print(f"Beginning to store title: {title}")
+
                 titleDir = reversed_showMap.get(title)
-                titleSize = showSize[f"{title}"]
+                print(f"Title directory: {titleDir}")
+                
+                
+                titleSize = showSize[title]
+                print(f"Title size: {titleSize}")
 
                 if titleDir.split('\\')[-2] == "localanime":
                     # We found out that its a local download can directly move
-                    dst = os.path.join(dst, showMap.get(title).split('\\')[-1])
+                    dst = os.path.join(dst, reversed_showMap.get(title).split('\\')[-1])
 
                 # we will assume our title is in a source within the downloads folder
                 else:
                     #PC Directory -> downloads -> source -> title
-                    dst = os.path.join(dst, "downloads", showMap.get(title).split('\\')[-2], showMap.get(title).split('\\')[-1])
+                    dst = os.path.join(dst, "downloads", reversed_showMap.get(title).split('\\')[-2], reversed_showMap.get(title).split('\\')[-1])
                     
+                storing_files = f"Storing file {index} / {numFiles}"
+                progressLabels["numFiles"].set(storing_files)
                 
-                myProgressBar['numFiles'].set(f"Storing file {index} / {numFiles}")
+                
+                progressLabels["Name"].set(f"Currently storing title: {title}")
                 
                 
-                myProgressBar['Name'].set(f"Currently storing title: {title}")
                 
-                shutil.move(title, dst)
+                
+                shutil.move(titleDir, dst)
                 
                 # Update how much has been stored
-                myProgressBar['sizeTransfered'].set(f"Stored {titleSize} / {totalSize}")
+                progressLabels["sizeTransfered"].set(f"Stored {titleSize} / {totalSize}")
                 
                 # Update the amount of data that has been stored
-                amountStored += showNumSize[f"{title}"]
+                amountStored += showNumSize[title]
                 
-                percentage = round((amountStored / totalSize) * 100, 2)
+                percentage = round((amountStored / storeSize) * 100, 2)
                 progressLabels["Percentage"].set(f"{percentage}%")
                 
                 index += 1
@@ -321,18 +320,53 @@ class Button_functions:
                 # Remove from the dictionary
                 if title in showMap:
                     del showMap[title]
-                    # TODO: Delete debugging statements
-                    print(f"Removed {title} from showMap.")
-                # Remove item from the Listbox
                 showListbox.delete(index)
+            showListbox.delete(ANCHOR)
+            
+            if unStoredTitles:
+                self.alertUserUnmovedShows(frm, obj, pop, unStoredTitles)
+                
+    def testDelete(self, showListbox, *args):
+        
+        
+        
+        # Get a list of all the items in showListbox
+        print(type(showListbox))
+        placeholderTitles = []
+        
+        
+        placeholderTitles = showListbox.get(0, showListbox.size())  # Get all items
+        print(placeholderTitles)
+        
+        for index in reversed(showListbox.curselection()):
+            title = showListbox.get(index)
+            print(title)
+            showListbox.delete(index)
+        showListbox.delete(ANCHOR)
+        
+        #for index in reversed(showListbox.curselection()):
+            #title = showListbox.get(index)
+            
+            
+            
+                
+                #title = showListbox.get(index)
+                # Remove from the dictionary
+                #if title in showMap:
+                    #del showMap[title]
+                    # TODO: Delete debugging statements
+                    #print(f"Removed {title} from showMap.")
+                # Remove item from the Listbox
+                #showListbox.delete(index)
                 
                 # TODO: Delete debugging statments
-                print(f"Deleted {title} from Listbox.")
-                
-            #all_entries = [showListbox.get(index) for index in range(showListbox.size())]
-
-            self.alertUserUnmovedShows(frm, pop, obj, unStoredTitles)
-            #return showMap
-            # Update the storage within the directory of the phone and pc
-        #else:
-            #return showMap
+                #print(f"Deleted {title} from Listbox.")
+        # Delete each selected title
+        # delete every title
+        # Reload every title except the ones deleted
+        
+        
+        
+        
+        
+        

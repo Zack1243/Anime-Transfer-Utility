@@ -86,7 +86,41 @@ class Functions:
         myProgressBar = ttk.Progressbar(root, orient="horizontal", length=300, mode='determinate')
         myProgressBar.grid(row=r, column=c)
         return myProgressBar
+    
+    def gridProgressbarLabels(self, frm, progressLabels):
+        numFilesLabel = self.gridVariableLabel(
+                frm, 
+                label_cont = progressLabels['numFiles'], 
+                r = 0, 
+                c = 0
+                )
+            
+        nameLabel = self.gridVariableLabel(
+            frm, 
+            label_cont = progressLabels['Name'], 
+            r = 2, 
+            c = 0
+            )
+        sizeTransferedLabel = self.gridVariableLabel(
+            frm, 
+            label_cont = progressLabels['sizeTransfered'], 
+            r = 3, 
+            c = 0
+            )
         
+        percentageLabel = self.gridVariableLabel(
+            frm, 
+            label_cont = progressLabels['percentage'], 
+            r = 4, 
+            c = 0
+            )
+        return numFilesLabel, nameLabel, sizeTransferedLabel, percentageLabel
+    
+    def getProgressbarLabels(root, frm, pop, obj, data, labels, showListbox, showMap):
+        # TODO: Finish the progressbarLabels
+        widgets = root.winfo_children()  # Get all widgets in the root
+        
+    
     
     def gridButton(self, frm, button_lab, button_function, r, c):
         button = ttk.Button(frm, text=button_lab, command = button_function)

@@ -86,4 +86,4 @@ class StoreAnime:
     
     def main(self, obj, func_but, data, labels):
         root, frm, labels = obj.rootInit()
-        self.operations(root, frm, labels obj, func_but, data)
+        self.operations(root, frm, labels, obj, func_but, data)

@@ -3,7 +3,7 @@ import math
 import os
 from popups import Popups
 import shutil
-#from storeAnime import StoreAnime
+from storeAnime import StoreAnime
 from tkinter import *
 from tkinter import ttk
 from tkinter import filedialog
@@ -140,15 +140,17 @@ class Button_functions:
         elif not os.path.exists(data['Phone Directory']):
             if pops.invalidPhoneDirectory(frm):
                 self.setPhoneDirectory(function_obj, labels)
-            
-        # TODO: Include this
-        #elif not function_obj.validAniyomiDirectory(pops, data['Phone Directory']):
-           # pass
+
+        # TODO: Delete the localanime and phone directory checks and replace them with validAniyomiDirectory function
+        #elif not function_obj.validAniyomiDirectory(frm, function_obj, func_but, pops, data['Phone Directory'], labels):
+            #pass
         
+        # Check if Localanime directory exists in the aniyomi directory
         elif not os.path.exists(os.path.join(str(data["Phone Directory"]), "localanime").replace("/", "\\")):
             if pops.noLocalAnimeDetected(frm):
                 self.setPhoneDirectory(function_obj, labels)
 
+        # Check if downloads directory exists in the aniyomi directory
         elif not os.path.exists(os.path.join(str(data["Phone Directory"]), "downloads").replace("/", "\\")):
             if pops.noDownloadsDetected(frm):
                 self.setPhoneDirectory(function_obj, labels)
@@ -159,9 +161,9 @@ class Button_functions:
             _ = pops.invalidPhoneDirectory(frm)
             
         # Initiate the storeAnime window!
-        #else:
-            #storeAnimeObj = StoreAnime(INFOFILE)
-            #storeAnimeObj.main(function_obj, func_but, labels, data)
+        else:
+            storeAnimeObj = StoreAnime(INFOFILE)
+            storeAnimeObj.main(function_obj, func_but, labels, data)
             
             
     def makeAlertMessage(self, obj, unstoredTitles):
@@ -232,11 +234,6 @@ class Button_functions:
 
             
             progressLabels['numFiles'].set(f"Storing {numFiles} in {data['PC Directory']}")
-
-            
-            
-            
-            
             
             for index in showListbox.curselection():
                 

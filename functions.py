@@ -141,9 +141,6 @@ class Functions:
 
         return f"{s} {size_name[i]}"
         
-        
-        
-        
     def getStorageUsage(self, directory):
         total_size = 0
         # Walk through each folder, subfolder, and files
@@ -456,10 +453,10 @@ class Functions:
         downloadsDir = os.path.join(str(phoneDir), "downloads").replace("/", "\\")
         
         # Get a list of the title directories in the 'local anime' folder
-        localAnimeTitleDirs = [os.path.join(str(localAnimeDir), item).replace("/", "\\") for item in os.listdir(localAnimeDir)]
+        localAnimeTitleDirs = [os.path.join(str(localAnimeDir), item).replace("/", "\\") for item in os.listdir(localAnimeDir) if item != '.nomedia']
         
         # Get a list of directories of the sources in the downloads folder
-        downloadedSourcesDirs = [os.path.join(str(downloadsDir), item).replace("/", "\\") for item in os.listdir(downloadsDir)]
+        downloadedSourcesDirs = [os.path.join(str(downloadsDir), item).replace("/", "\\") for item in os.listdir(downloadsDir) if item != '.nomedia']
         
         # Instantiate a list of title directories in the source directories
         sourceTitleDirs = []

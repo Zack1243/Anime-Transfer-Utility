@@ -9,34 +9,85 @@ import os
 import json
 import shutil
 INFOFILE = 'information.json'
+global root
+global frm
+global data
+global labels
+root = Tk()
+frm = ttk.Frame(root, padding=10)
+data = {
+            "PC Directory": "testing",
+            "PC Capacity": "testing",
+            "PC storage usage": "testing",
+            "Phone storage usage": "testing",
+            "Phone Directory": "testing",
+            "Phone Capacity": "testing",
+        }
+labels = {
+        "PC Directory": StringVar(),
+        "PC Storage Usage": StringVar(),
+        "Phone Directory": StringVar(),
+        "Phone Storage Usage": StringVar(),
+    }
 
 
+# Set the Phone Directory
+def setPCDirectory():
+    
+    # Prompt user to select file location
+    folder_path = filedialog.askdirectory()
+    
+    # Update JSON and data with file location
+    data["PC Directory"] = folder_path
+    with open(INFOFILE, 'w') as json_file:
+        json.dump(data, json_file, indent=4)
 
+# Set the Phone Directory
+def setPhoneDirectory():
+    
+    # Prompt user to select file location
+    folder_path = filedialog.askdirectory()
+    # Update JSON and data with file location
+    data["Phone Directory"] = folder_path
+    with open(INFOFILE, 'w') as json_file:
+        json.dump(data, json_file, indent=4)
 
-
-
-
-
-
-
-
-
-def populateMainpage(root, frm, data):
+def populateMainpage():
     # Line 1
     welcomeLabel = ttk.Label(frm, text="Welcome to the Aniyomi GUI!")
     welcomeLabel.grid(row=0, column=0)
     
     # Line 2
+    # Column 0: Set Phone Directory Label
+    phoneDirectoryLabel = ttk.Label(frm, text="Set Phone Directory")
+    phoneDirectoryLabel.grid(row=1, column=0)
+    
+    # Column 1: Set Phone Directory Button
+    phoneDirectoryButton = ttk.Button(frm, text="...", command=lambda: setPhoneDirectory())
+    phoneDirectoryButton.grid(row=1, column=1)
+    
+    # Column 2: Phone Directory
+    phoneDirectoryVariableLabel1 = ttk.Label(frm, textvariable=labels["Phone Directory"])
+    phoneDirectoryVariableLabel1.grid(row=1, column=2)
     
     
+    # Line 3
+    pcDirectoryLabel = ttk.Label(frm, text="Set PC Directory")
+    pcDirectoryLabel.grid(row=2, column=0)
+    pcDirectoryButton = ttk.Button(frm, text="...", command=lambda: setPCDirectory())
+    pcDirectoryButton.grid(row=2, column=1)
+    
+    
+    
+    
+    
+
 
 # Make the mainpage
 # Start the panel of tkinter
 def main():
-    
-    # Make an instance of Tkinter
-    root = Tk()
-    frm = ttk.Frame(root, padding=10)
+    global data
+    global labels
     frm.grid()
     app_width = 600
     app_height = 500
@@ -49,11 +100,18 @@ def main():
     # Check that Infofile has been instantiated
     if os.path.exists(INFOFILE):
         with open(INFOFILE, 'r') as json_file:
-            data = json.load(json_file)
-    
+            dataValues = json.load(json_file)
+            data["PC Directory"] = dataValues["PC Directory"]
+            data["PC Capacity"] = dataValues["PC Capacity"]
+            data["PC storage usage"] = dataValues["PC storage usage"]
+            data["Phone Directory"] = dataValues["Phone Directory"]
+            data["Phone Capacity"] = dataValues["Phone Capacity"]
+            data["Phone storage usage"] = dataValues["Phone storage usage"]
+            labels["Phone Directory"].set(f"{dataValues['Phone Directory']}")
+            
     # Cannot find INFOFILE. Create and populate with random data
     else:
-        data = {
+        labels = {
             "PC Directory": "testing",
             "PC Capacity": "testing",
             "PC storage usage": "testing",
@@ -62,13 +120,12 @@ def main():
             "Phone Capacity": "testing",
         }
         with open(INFOFILE, 'w') as json_file:
-            json.dump(data, json_file, indent=4)
+            json.dump(labels, json_file, indent=4)
+        data = labels
             
     if not os.path.exists(INFOFILE):
         print("ERROR: Cannot make the INFOFILE")
     
-    populateMainpage(root, frm, data)
+    populateMainpage()
     root.mainloop()
-
-
 main()

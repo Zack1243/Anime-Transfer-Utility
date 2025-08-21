@@ -51,11 +51,20 @@ def setPhoneDirectory():
     data["Phone Directory"] = folder_path
     with open(INFOFILE, 'w') as json_file:
         json.dump(data, json_file, indent=4)
-
-#def populateRetrievePage():
+        
+def populateRetrievePage():
     # List of the titles avaliable
-    # 
-
+        # Either in downloads -> subsidiary folder
+    # os list directory contents
+    curDir = os.getcwd()
+    print(curDir)
+        
+        # Or part of what's present there (goes into localanime)
+    
+    
+    # Shows are currently on the pc
+    # Shows are within the folders on the pc
+    
 
 
 # Open the Retrieve Page

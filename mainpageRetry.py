@@ -52,6 +52,31 @@ def setPhoneDirectory():
     with open(INFOFILE, 'w') as json_file:
         json.dump(data, json_file, indent=4)
 
+#def populateRetrievePage():
+    # List of the titles avaliable
+    # 
+
+
+
+# Open the Retrieve Page
+def retrievePage():
+    retrieveRoot = Tk()
+    retrieveFrm = ttk.Frame(retrieveRoot, padding=10)
+    retrieveFrm.grid()
+    app_width = 600
+    app_height = 500
+    screen_width = retrieveRoot.winfo_screenwidth()
+    screen_height = retrieveRoot.winfo_screenheight()
+    x = (screen_width / 2) - (app_width / 2)
+    y = (screen_height / 2) - (app_height / 2)
+    retrieveRoot.geometry(f'{app_width}x{app_height}+{int(x)}+{int(y)}')
+    #populateRetrievePage()
+    retrieveRoot.mainloop()
+
+
+
+
+
 def populateMainpage():
     # Line 1
     welcomeLabel = ttk.Label(frm, text="Welcome to the Aniyomi GUI!")
@@ -67,17 +92,27 @@ def populateMainpage():
     phoneDirectoryButton.grid(row=1, column=1)
     
     # Column 2: Phone Directory
-    phoneDirectoryVariableLabel1 = ttk.Label(frm, textvariable=labels["Phone Directory"])
-    phoneDirectoryVariableLabel1.grid(row=1, column=2)
+    phoneDirectoryVariableLabel = ttk.Label(frm, textvariable=labels["Phone Directory"])
+    phoneDirectoryVariableLabel.grid(row=1, column=2)
     
     
     # Line 3
+    # Column 0: Set PC Directory Label
     pcDirectoryLabel = ttk.Label(frm, text="Set PC Directory")
     pcDirectoryLabel.grid(row=2, column=0)
+    
+    # Column 1: Set PC Directory Button
     pcDirectoryButton = ttk.Button(frm, text="...", command=lambda: setPCDirectory())
     pcDirectoryButton.grid(row=2, column=1)
     
+    # Column 2: PC Directory
+    pcDirectoryVariableLabel = ttk.Label(frm, textvariable=labels["PC Directory"])
+    pcDirectoryVariableLabel.grid(row=2, column=2)
     
+    # Line 4
+    # Column 0: Retrieve Button
+    retrieveButton = ttk.Button(frm, text="Retrieve", command=lambda: retrievePage())
+    retrieveButton.grid(row=3, column=0)
     
     
     
@@ -108,6 +143,7 @@ def main():
             data["Phone Capacity"] = dataValues["Phone Capacity"]
             data["Phone storage usage"] = dataValues["Phone storage usage"]
             labels["Phone Directory"].set(f"{dataValues['Phone Directory']}")
+            labels["PC Directory"].set(f"{dataValues['PC Directory']}")
             
     # Cannot find INFOFILE. Create and populate with random data
     else:

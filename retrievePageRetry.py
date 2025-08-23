@@ -13,6 +13,7 @@ global root
 global frm
 global data
 global labels
+global animeMap
 root = Tk()
 frm = ttk.Frame(root, padding=10)
 data = {
@@ -29,10 +30,12 @@ labels = {
         "Phone Directory": StringVar(),
         "Phone Storage Usage": StringVar(),
     }
+animeMap = {}
+
 
 # Get a Dictionaryh of [show: Directory]
 def getShowMap():
-    animeMap = {}
+    global animeMap
 
     # Get PC Directory
     current_dir = data["PC Directory"]
@@ -52,37 +55,64 @@ def getShowMap():
                 titles = [d for d in os.listdir(str(f"{current_dir}/downloads/{site}")) if os.path.isdir(os.path.join(str(f"{current_dir}/downloads/{site}"), d))]
                 for title in titles:
                     animeMap[title] = str(f"{current_dir}/{site}/{title}")
-    for anime in animeMap:
-        print(anime + animeMap[anime])
-    return animeMap
+    #for anime in animeMap:
+       # print(anime + animeMap[anime])
 
-def gridListbox(frm, titles):
+# Make a list of shows
+def gridListbox():
     my_scrollbar = Scrollbar(frm, orient=VERTICAL)
     my_listbox = Listbox(frm, width=50, yscrollcommand=my_scrollbar.set, selectmode=MULTIPLE)
     my_scrollbar.config(command=my_listbox.yview)
     my_listbox.grid(pady=15)
     my_listbox.grid(row=0, column=0)
     my_scrollbar.grid(row=0, column=1, sticky='ns')
-    for show in titles:
+    for show in animeMap:
         my_listbox.insert(0, show)
-        #END??? instead of the 0 above
+    my_listbox.grid()
     return my_listbox
 
 
+def retrieveShows(my_listbox):
+    dst = data['Phone Directory']
+    dst = dst.replace("/", "\\")
+    if my_listbox.curselection():
+        for index in my_listbox.curselection():
+            title = my_listbox.get(index)
+            print(f"Beginning to store title: {title}")            
+            titleDir = animeMap[title]
+            print(f"Directory of title: {animeMap[title]}")
+            if titleDir.split('/')[-2] == data['PC Directory'].split('/')[-1]:
+                # PC Directory -> downloads -> source -> title
+                dst = os.path.join(dst, "localanime", animeMap[title].split('/')[-1])
+            # we will assume our title is in a source within the downloads folder
+            
+            else:
+                # We found out that its a local download can directly move
+                dst = os.path.join(dst, "downloads", animeMap[title].split('/')[-2], animeMap[title].split('/')[-1])
+                
+            print("Destination: " + dst)
+            #os.move src to dst
+            
+        for index in reversed(my_listbox.curselection()):
+            title = my_listbox.get(index)
+            # Remove from the dictionary
+            if title in animeMap:
+                del animeMap[title]
+            my_listbox.delete(index)
+        my_listbox.delete(ANCHOR)
 
 def populateRetrievePage():
     
     # Get a Dictionary of shows
-    animeMap = getShowMap()
+    getShowMap()
 
-    # Make a listbox in tkinter
-    showListbox = obj.gridListbox(
-        frm,
-        titles,
-        r = 0,
-        c = 0
-    )
-        
+    # Make a listbox of shows
+    my_listbox = gridListbox()
+    
+    # Button to retrieve shows
+    retrieveButton = ttk.Button(text="Retrieve", command=lambda: retrieveShows(my_listbox))
+    retrieveButton.grid(row=1, column=0)
+    
 
 # Make the mainpage
 # Start the panel of tkinter

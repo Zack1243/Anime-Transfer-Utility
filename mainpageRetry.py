@@ -20,11 +20,14 @@ global retrieveRoot
 global downloadRoot
 global storeRoot
 global storeFrm
+global progressRoot
+global progressFrm
 global downloadFrm
 global data
 global labels
 global retrieveAnimeMap
 global storeAnimeMap
+
 root = Tk()
 frm = ttk.Frame(root, padding=10)
 retrieveAnimeMap = {}
@@ -44,7 +47,7 @@ labels = {
         "Phone Storage Usage": StringVar(),
     }
 
-
+#/mnt/c/Users/Zachary/AppData/Local/Programs/Python/Python311/python.exe "d:/D Documents/Coding/Aniyomi Project/Anime-Transfer-Utility/mainpageRetry.py"
 # Set the Phone Directory
 def setPCDirectory():
     
@@ -53,6 +56,11 @@ def setPCDirectory():
     
     # Update JSON and data with file location
     data["PC Directory"] = folder_path
+
+        
+    labels["PC Directory"].set(f"{data['PC Directory']}")
+
+
     with open(INFOFILE, 'w') as json_file:
         json.dump(data, json_file, indent=4)
 
@@ -63,8 +71,52 @@ def setPhoneDirectory():
     folder_path = filedialog.askdirectory()
     # Update JSON and data with file location
     data["Phone Directory"] = folder_path
+
+    labels["Phone Directory"].set(f"{data['Phone Directory']}")
+
     with open(INFOFILE, 'w') as json_file:
         json.dump(data, json_file, indent=4)
+
+#def buildProgressBar(self, root, obj):
+    """summary_ Instantiates a progressbar
+
+    Args:
+        file (file): File seeking to be instantiated
+    Returns:
+        progressLabels (map): The map of labels corresponding to the progress bar
+    """
+    
+    progressLabels = {
+        "Summary": StringVar(), # Transfering NUM files to DIRECTORY
+        "Percentage": StringVar(), # NUM% complete
+        "numFiles": StringVar(), # Transfering file NUM/TOTAL
+        "Name": StringVar(), # Name: NAME
+        "sizeTransfered": StringVar(), # Transfered NUM / TOTAL SIZE
+    }
+    progressLabels["Percentage"].set("0%")
+    myProgressBar = ttk.Progressbar(root, orient="horizontal", length=300, mode='determinate')
+    myProgressBar.grid(row=0, column=0)
+    return myProgressBar
+
+
+#def populateProgressPage(progressRoot):
+    copyingNumTitlesLabel = Label(progressRoot, textvariable=toFrom)
+    copyingNumTitlesLabel.grid(row=0, column=0)
+
+#def progressPage():
+    progressRoot = Tk()
+    progressFrm = ttk.Frame(progressRoot, padding=10)
+    progressFrm.grid()
+    app_width = 600
+    app_height = 500
+    screen_width = progressRoot.winfo_screenwidth()
+    screen_height = progressRoot.winfo_screenheight()
+    x = (screen_width / 2) - (app_width / 2)
+    y = (screen_height / 2) - (app_height / 2)
+    progressRoot.geometry(f'{app_width}x{app_height}+{int(x)}+{int(y)}')
+    populateProgressPage(progressRoot)
+    progressRoot.mainloop()
+
 
 ## STORE PAGE
 def gridStoreListbox(storeFrm):

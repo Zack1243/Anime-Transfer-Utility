@@ -30,8 +30,10 @@ global retrieveAnimeMap
 global storeAnimeMap
 global progressLabels
 
-root = Tk()
-frm = ttk.Frame(root, padding=10)
+progressRoot = Tk()
+progressFrm = ttk.Frame(progressRoot, padding=10)
+
+
 retrieveAnimeMap = {}
 storeAnimeMap = {}
 showNumSize = {}
@@ -59,29 +61,6 @@ progressLabels = {
 }
 
 
-
-
-def buildProgressBar():
-    """summary_ Instantiates a progressbar
-
-    Args:
-        file (file): File seeking to be instantiated
-    Returns:
-        progressLabels (map): The map of labels corresponding to the progress bar
-    """
-    
-    progressLabels = {
-        "Summary": StringVar(), # Transfering NUM files to DIRECTORY
-        "Percentage": StringVar(), # NUM% complete
-        "numFiles": StringVar(), # Transfering file NUM/TOTAL
-        "Name": StringVar(), # Name: NAME
-        "sizeTransfered": StringVar(), # Transfered NUM / TOTAL SIZE
-    }
-    progressLabels["Percentage"].set("0%")
-    myProgressBar = ttk.Progressbar(root, orient="horizontal", length=300, mode='determinate')
-    myProgressBar.grid(row=0, column=0)
-    return myProgressBar
-
 def getSize(titleDir):
     total_size = 0
     # Walk through each folder, subfolder, and files
@@ -95,6 +74,8 @@ def getSize(titleDir):
     return total_size
 
 def convert(size):
+    if size == 0:
+        return f"0 B"
     size_name = ("B", "KB", "MB", "GB", "TB")
     i = int(math.floor(math.log(size, 1024)))
     p = math.pow(1024, i)
@@ -102,41 +83,113 @@ def convert(size):
 
     return f"{s} {size_name[i]}"
 
-def transfer(src, dst):
+# Stores the data of the titles
+def storeData(src, dst):
     global progressLabels
-    title = src.split('\\')[-1]
+    global showSize
+    global showNumSize
+    title = src.split("\\")[-1]
     size = getSize(src)
     convertedSize = convert(size)
     showNumSize[title] = size
     showSize[title] = convertedSize
-    progressLabels["Name"] = f"Name: {title}"
+    progressLabels["Name"].set(f"Name: {title}")
+
+# This function test stores the items and will delete them afterwards
+def storeTitles(srcs, dst, progressBar):
+    global progressLabels
+    global showSize
+    global showNumSize
+    transferSize = 0
+    sizeTransfered = 0
+    percentage = 0
+    titleNum = 1
+    for src in srcs:
+        title = src.split("\\")[-1]
+        print(f"THIS IS THE TITLE: {title}")
+        transferSize = transferSize + showNumSize[title]
+    totalSize = convert(transferSize)
+    
+    title = srcs[0].split("\\")[-1]
+    progressLabels["Percentage"].set(f"{percentage}% Complete")
+    progressLabels['Name'].set(f"Name: {title}")
+    progressLabels['sizeTransfered'].set(f"Transfered 0 / {totalSize}")
+    progressLabels['numFiles'].set(f"Stored {titleNum} / {len(srcs)} titles in {dst}")
+        
+    for src in srcs:
+        title = src.split("\\")[-1]
+        
+        newDst = os.path.join(dst, title)
+        shutil.copytree(src, newDst)
+        
+        sizeTransfered = sizeTransfered + showNumSize[title]
+        cvrtedSizeTransfered = convert(sizeTransfered)
+        
+        percentage = (sizeTransfered / transferSize) * 100
+        progressLabels["Percentage"].set(f"{percentage}% Complete")
+        progressLabels['Name'].set(f"Name: {title}")
+        progressLabels['sizeTransfered'].set(f"Transfered {cvrtedSizeTransfered} / {totalSize}")
+        progressBar['value'] = percentage
+        progressLabels['numFiles'].set(f"Stored {titleNum} / {len(srcs)} titles in {dst}")
+        titleNum = titleNum + 1
+
+def populateProgressPage(progressRoot, progressFrm):
+    global progressLabels
+    
+    srcs = [
+            r"D:\emulated Aniyomi PC\desk wars",
+            r"D:\emulated Aniyomi PC\dead cells",
+            r"D:\emulated Aniyomi PC\castle"
+            #r"D:\emulated Aniyomi PC\pokemon",
+            #r"D:\emulated Aniyomi PC\last of us",
+            ]
+    
+    # The number of titles being transfered TODO: Make it into a changeable variable
+    numSrcs = 3
+    
+    # The destination directory for this particular transfer TODO: Make it into a changeable variable
+    dst = r"D:\emulated Aniyomi Phone\localanime"
+    
+    sizeTransferedLabel = ttk.Label(progressFrm, textvariable=progressLabels['numFiles'])
+    sizeTransferedLabel.grid(row=0, column=0)
+    
+    nameLabel = ttk.Label(progressFrm, textvariable=progressLabels['Name'])
+    nameLabel.grid(row=1, column=0)
+    
+    sizeTransferedLabel = ttk.Label(progressFrm, textvariable=progressLabels['sizeTransfered'])
+    sizeTransferedLabel.grid(row=2, column=0)
+    
+    percentageLabel = ttk.Label(progressFrm, textvariable=progressLabels['Percentage'])
+    percentageLabel.grid(row=3, column=0)
+    
+    myProgressBar = ttk.Progressbar(progressFrm, orient="horizontal", length=300, mode='determinate')
+    myProgressBar.grid(row=4, column=0)
+
+    storeButton = ttk.Button(progressFrm, text="Store", command=lambda: storeTitles(srcs, dst, myProgressBar))
+    storeButton.grid(row=10,column=0)
 
 
-
-
-
-
-
-def populateProgressPage(progressRoot):
-    src = "D:\D Documents\Coding\emulated Aniyomi Phone\localanime\ben 10"
-    dst = "D:\D Documents\Coding\emulated Aniyomi Phone\localanime"
-    if os.path.exists("D:\D Documents\Coding\emulated Aniyomi Phone\ben 10"):
-        dst = src
-        src = "D:\D Documents\Coding\emulated Aniyomi Phone\ben 10"
+def startTestTransfer():
+    # List of titles to test transfer
+    srcs = [
+            r"D:\emulated Aniyomi PC\desk wars",
+            r"D:\emulated Aniyomi PC\dead cells",
+            r"D:\emulated Aniyomi PC\castle"
+            #r"D:\emulated Aniyomi PC\pokemon",
+            #r"D:\emulated Aniyomi PC\last of us",
+            ]
+    dst = r"D:\emulated Aniyomi Phone\localanime"
 
     print("...........................................................")
     print("...........................................................")
-    print(f"Source Directory: {src}")
+    print(f"Source Directories: {srcs}")
     print(f"Destination Directory: {dst}")
-       
-    transfer(src, dst)
+
+    for src in srcs:
+        storeData(src, dst)
     
 
-
-
 def progressPage():
-    progressRoot = Tk()
-    progressFrm = ttk.Frame(progressRoot, padding=10)
     progressFrm.grid()
     app_width = 600
     app_height = 500
@@ -145,7 +198,14 @@ def progressPage():
     x = (screen_width / 2) - (app_width / 2)
     y = (screen_height / 2) - (app_height / 2)
     progressRoot.geometry(f'{app_width}x{app_height}+{int(x)}+{int(y)}')
-    populateProgressPage(progressRoot)
+    
+    
+    startTestTransfer()
+    # Info has already been populated
+    # Start the progressRoot
+    
+    
+    populateProgressPage(progressRoot, progressFrm)
     progressRoot.mainloop()
 
 progressPage()

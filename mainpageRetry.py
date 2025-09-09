@@ -10,6 +10,7 @@ import json
 import shutil
 import subprocess
 import sys
+import math
 import re
 
 INFOFILE = 'information.json'
@@ -25,6 +26,7 @@ global progressFrm
 global downloadFrm
 global data
 global labels
+global progressLabels
 global retrieveAnimeMap
 global storeAnimeMap
 
@@ -46,6 +48,14 @@ labels = {
         "Phone Directory": StringVar(),
         "Phone Storage Usage": StringVar(),
     }
+progressLabels = {
+    "Summary": StringVar(), # Transfering NUM files to DIRECTORY
+    "Percentage": StringVar(), # NUM% complete
+    "numFiles": StringVar(), # Transfering file NUM/TOTAL
+    "Name": StringVar(), # Name: NAME
+    "sizeTransfered": StringVar(), # Transfered NUM / TOTAL SIZE
+}
+
 
 #/mnt/c/Users/Zachary/AppData/Local/Programs/Python/Python311/python.exe "d:/D Documents/Coding/Aniyomi Project/Anime-Transfer-Utility/mainpageRetry.py"
 # Set the Phone Directory
@@ -77,45 +87,6 @@ def setPhoneDirectory():
     with open(INFOFILE, 'w') as json_file:
         json.dump(data, json_file, indent=4)
 
-#def buildProgressBar(self, root, obj):
-    """summary_ Instantiates a progressbar
-
-    Args:
-        file (file): File seeking to be instantiated
-    Returns:
-        progressLabels (map): The map of labels corresponding to the progress bar
-    """
-    
-    progressLabels = {
-        "Summary": StringVar(), # Transfering NUM files to DIRECTORY
-        "Percentage": StringVar(), # NUM% complete
-        "numFiles": StringVar(), # Transfering file NUM/TOTAL
-        "Name": StringVar(), # Name: NAME
-        "sizeTransfered": StringVar(), # Transfered NUM / TOTAL SIZE
-    }
-    progressLabels["Percentage"].set("0%")
-    myProgressBar = ttk.Progressbar(root, orient="horizontal", length=300, mode='determinate')
-    myProgressBar.grid(row=0, column=0)
-    return myProgressBar
-
-
-#def populateProgressPage(progressRoot):
-    copyingNumTitlesLabel = Label(progressRoot, textvariable=toFrom)
-    copyingNumTitlesLabel.grid(row=0, column=0)
-
-#def progressPage():
-    progressRoot = Tk()
-    progressFrm = ttk.Frame(progressRoot, padding=10)
-    progressFrm.grid()
-    app_width = 600
-    app_height = 500
-    screen_width = progressRoot.winfo_screenwidth()
-    screen_height = progressRoot.winfo_screenheight()
-    x = (screen_width / 2) - (app_width / 2)
-    y = (screen_height / 2) - (app_height / 2)
-    progressRoot.geometry(f'{app_width}x{app_height}+{int(x)}+{int(y)}')
-    populateProgressPage(progressRoot)
-    progressRoot.mainloop()
 
 
 ## STORE PAGE
@@ -123,12 +94,10 @@ def gridStoreListbox(storeFrm):
     my_scrollbar = Scrollbar(storeFrm, orient=VERTICAL)
     my_listbox = Listbox(storeFrm, width=50, yscrollcommand=my_scrollbar.set, selectmode=MULTIPLE)
     my_scrollbar.config(command=my_listbox.yview)
-    my_listbox.grid(pady=15)
-    my_listbox.grid(row=0, column=0)
+    my_listbox.grid(row=0, column=0, pady=15)
     my_scrollbar.grid(row=0, column=1, sticky='ns')
     for show in storeAnimeMap:
         my_listbox.insert(0, show)
-    my_listbox.grid()
     return my_listbox
 
 def getStoreShowMap():
@@ -177,7 +146,6 @@ def storeShows(my_listbox):
                 dst = os.path.join(dst, "downloads", storeAnimeMap[title].split('/')[-2], storeAnimeMap[title].split('/')[-1])
             shutil.move(titleDir, dst)
             #os.move src to dst
-            
         for index in reversed(my_listbox.curselection()):
             title = my_listbox.get(index)
             # Remove from the dictionary
@@ -187,7 +155,6 @@ def storeShows(my_listbox):
         my_listbox.delete(ANCHOR)
 
 def populateStorePage(storeFrm, storeRoot):
-    
     # Get a Dictionary of shows
     getStoreShowMap()
 
@@ -197,9 +164,21 @@ def populateStorePage(storeFrm, storeRoot):
     # Button to retrieve shows
     storeButton = ttk.Button(storeFrm, text="Store", command=lambda: storeShows(my_listbox))
     storeButton.grid(row=1, column=0)
+    
+    separator = ttk.Separator(storeFrm, orient="horizontal")
+    separator.grid(row=2, column=0, columnspan=2, sticky="ew", pady=10)
+    
+    
+    progressLabels['numFiles'].set(f"Transferred 0 / 0")
+    sizeTransferedLabel = ttk.Label(storeFrm, textvariable=progressLabels["numFiles"])
+    sizeTransferedLabel.grid(row=3, column=0, columnspan=2, sticky="ew", pady=10)
+    
+    testLabel = ttk.Label(storeFrm, text="testing")
+    testLabel.grid()
 
 def storePage():
-    storeRoot = Tk()
+    global progressLabels
+    storeRoot = Toplevel(root)
     storeFrm = ttk.Frame(storeRoot, padding=10)
     storeFrm.grid()
     app_width = 600
@@ -209,6 +188,7 @@ def storePage():
     x = (screen_width / 2) - (app_width / 2)
     y = (screen_height / 2) - (app_height / 2)
     storeRoot.geometry(f'{app_width}x{app_height}+{int(x)}+{int(y)}')
+    
     populateStorePage(storeFrm, storeRoot)
     storeRoot.mainloop()
 
@@ -238,15 +218,7 @@ def retrieveShows(my_listbox):
                 # We found out that its a local download can directly move
                 dst = os.path.join(dst, "downloads", retrieveAnimeMap[title].split('/')[-2], retrieveAnimeMap[title].split('/')[-1])
             titleDir = os.path.normpath(titleDir)
-            print(f"Transfering {titleDir} to {dst}...")
-            if os.path.exists(titleDir):
-                shutil.move(titleDir, dst)
-                if os.path.exists(dst):
-                    print(f"{title} was successfully transfered!")
-                else:
-                    print(f"{title} has failed to transfer!")
-            else:
-                print(f"src dir {titleDir} does not exist!")
+            shutil.move(titleDir, dst)
             
         for index in reversed(my_listbox.curselection()):
             title = my_listbox.get(index)
@@ -285,12 +257,10 @@ def gridListbox(retrieveFrm):
     my_scrollbar = Scrollbar(retrieveFrm, orient=VERTICAL)
     my_listbox = Listbox(retrieveFrm, width=50, yscrollcommand=my_scrollbar.set, selectmode=MULTIPLE)
     my_scrollbar.config(command=my_listbox.yview)
-    my_listbox.grid(pady=15)
-    my_listbox.grid(row=0, column=0)
+    my_listbox.grid(row=0, column=0, pady=15)
     my_scrollbar.grid(row=0, column=1, sticky='ns')
     for show in retrieveAnimeMap:
         my_listbox.insert(0, show)
-    my_listbox.grid()
     return my_listbox
 
 
@@ -306,9 +276,10 @@ def populateRetrievePage(retrieveFrm, retrieveRoot):
     retrieveButton = ttk.Button(retrieveFrm, text="Retrieve", command=lambda: retrieveShows(my_listbox))
     retrieveButton.grid(row=1, column=0)
 
+
 # Open the Retrieve Page
 def retrievePage():
-    retrieveRoot = Tk()
+    retrieveRoot = Toplevel(root)
     retrieveFrm = ttk.Frame(retrieveRoot, padding=10)
     retrieveFrm.grid()
     app_width = 600
@@ -480,7 +451,7 @@ def populateDownloadPage(downloadFrm, downloadRoot):
     transferButton.grid(pady=20)
     
 def downloadPage():
-    downloadRoot = Tk()
+    downloadRoot = Toplevel(root)
     downloadFrm = ttk.Frame(downloadRoot, padding=10)
     downloadFrm.grid()
     app_width = 600

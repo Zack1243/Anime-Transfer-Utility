@@ -30,8 +30,7 @@ global retrieveAnimeMap
 global storeAnimeMap
 global progressLabels
 
-progressRoot = Tk()
-progressFrm = ttk.Frame(progressRoot, padding=10)
+
 
 
 retrieveAnimeMap = {}
@@ -187,9 +186,10 @@ def startTestTransfer():
 
     for src in srcs:
         storeData(src, dst)
-    
 
 def progressPage():
+    progressRoot = Tk()
+    progressFrm = ttk.Frame(progressRoot, padding=10)
     progressFrm.grid()
     app_width = 600
     app_height = 500
@@ -200,12 +200,11 @@ def progressPage():
     progressRoot.geometry(f'{app_width}x{app_height}+{int(x)}+{int(y)}')
     
     
-    startTestTransfer()
+    startTestTransfer(progressFrm)
     # Info has already been populated
     # Start the progressRoot
     
     
     populateProgressPage(progressRoot, progressFrm)
     progressRoot.mainloop()
-
 progressPage()

@@ -29,7 +29,9 @@ global labels
 global progressLabels
 global retrieveAnimeMap
 global storeAnimeMap
+global showNumSize
 
+showNumSize = {}
 root = Tk()
 frm = ttk.Frame(root, padding=10)
 retrieveAnimeMap = {}
@@ -57,7 +59,7 @@ progressLabels = {
 }
 
 
-#/mnt/c/Users/Zachary/AppData/Local/Programs/Python/Python311/python.exe "d:/D Documents/Coding/Aniyomi Project/Anime-Transfer-Utility/mainpageRetry.py"
+## GENERAL FUNCTIONS
 # Set the Phone Directory
 def setPCDirectory():
     
@@ -87,7 +89,44 @@ def setPhoneDirectory():
     with open(INFOFILE, 'w') as json_file:
         json.dump(data, json_file, indent=4)
 
+# get the size of a title directory
+def getSize(titleDir):
+    total_size = 0
+    # Walk through each folder, subfolder, and files
+    for dirpath, dirnames, filenames in os.walk(titleDir):
+        for filename in filenames:
+            # Get the full file path
+            file_path = os.path.join(dirpath, filename)
+            # Add the file size to the total size
+            if os.path.isfile(file_path):
+                total_size += os.path.getsize(file_path)
+    return total_size
 
+# Stores the data of the titles
+def storeData(title, src):
+    global showNumSize
+    size = getSize(src)
+    showNumSize[title] = size
+
+# Returns the total size of all items in listbox
+def getTotalSize(my_listbox):
+    global showNumSize
+    totalSize = 0
+    if my_listbox.curselection():
+        for index in my_listbox.curselection():
+            title = my_listbox.get(index)
+            totalSize = totalSize + showNumSize[title]
+    return totalSize
+
+def convert(size):
+    if size == 0:
+        return f"0 B"
+    size_name = ("B", "KB", "MB", "GB", "TB")
+    i = int(math.floor(math.log(size, 1024)))
+    p = math.pow(1024, i)
+    s = round(size / p, 2)
+
+    return f"{s} {size_name[i]}"
 
 ## STORE PAGE
 def gridStoreListbox(storeFrm):
@@ -121,31 +160,56 @@ def getStoreShowMap():
             localAnimeDir = [d for d in os.listdir(os.path.join(current_dir, title)) if os.path.isdir(os.path.join(current_dir, title))]
             for title in localAnimeDir:
                 storeAnimeMap[title] = str(f"{current_dir}/localanime/{title}")
-    
-def storeShows(my_listbox):
+        
+def storeShows(my_listbox, progressBar):
+    global storeAnimeMap
+    numFilesTransfered = 0
+    percentage = 0
+    sizeTransfered = 0
     dst = data['PC Directory']
     dst = dst.replace("/", "\\")
+    
+    
     if my_listbox.curselection():
         for index in my_listbox.curselection():
             title = my_listbox.get(index)
+            storeData(title, storeAnimeMap[title])
+        totalSize = getTotalSize(my_listbox)
+        totalFiles = len(my_listbox.curselection())
+        
+        
+        progressLabels["Name"].set(f"Storing: ")
+        progressLabels["Percentage"].set(f"{percentage}% Completed")
+        progressLabels['numFiles'].set(f"Stored {numFilesTransfered} / {totalFiles} items")
+        progressLabels["sizeTransfered"].set(f"Stored 0b / {convert(totalSize)}")
+        
+        for index in my_listbox.curselection():
+            
+            title = my_listbox.get(index)
             titleDir = storeAnimeMap[title]
+            titleSize = showNumSize[title]
+            progressLabels["Name"].set(f"Storing: {title}")
+            
             print(f"Beginning to store title: {title}")
             print(f"Directory of title: {storeAnimeMap[title]}")
             
             # The title is in the localanime directory
             if titleDir.split('/')[-2] == "localanime":
-                print("This print condition should trigger for anything within localanime")
-                # PC Directory -> downloads -> source -> title
                 dst = os.path.join(dst, storeAnimeMap[title].split('/')[-1])
-            # we will assume our title is in a source within the downloads folder
-            
-            
             # The title is in the downloads directory
             else:
-                # We found out that its a local download can directly move
                 dst = os.path.join(dst, "downloads", storeAnimeMap[title].split('/')[-2], storeAnimeMap[title].split('/')[-1])
+            
             shutil.move(titleDir, dst)
-            #os.move src to dst
+            
+            sizeTransfered = sizeTransfered + titleSize
+            percentage = (sizeTransfered / totalSize) * 100
+            numFilesTransfered = numFilesTransfered + 1
+            
+            progressLabels["sizeTransfered"].set(f"Stored {convert(sizeTransfered)} / {convert(totalSize)}")
+            progressLabels["Percentage"].set(f"{percentage}% Completed")
+            progressLabels['numFiles'].set(f"Stored {numFilesTransfered} / {totalFiles} items")
+            progressBar['value'] = percentage
         for index in reversed(my_listbox.curselection()):
             title = my_listbox.get(index)
             # Remove from the dictionary
@@ -155,26 +219,44 @@ def storeShows(my_listbox):
         my_listbox.delete(ANCHOR)
 
 def populateStorePage(storeFrm, storeRoot):
+    
+    # Have to make a progress Bar
+    myProgressBar = ttk.Progressbar(storeFrm, orient="horizontal", length=300, mode='determinate')
+    
     # Get a Dictionary of shows
     getStoreShowMap()
 
     # Make a listbox of shows
     my_listbox = gridStoreListbox(storeFrm)
     
+    
+    
     # Button to retrieve shows
-    storeButton = ttk.Button(storeFrm, text="Store", command=lambda: storeShows(my_listbox))
+    storeButton = ttk.Button(storeFrm, text="Store", command=lambda: storeShows(my_listbox, myProgressBar))
     storeButton.grid(row=1, column=0)
     
+    # Separator for the progress bar
     separator = ttk.Separator(storeFrm, orient="horizontal")
     separator.grid(row=2, column=0, columnspan=2, sticky="ew", pady=10)
     
-    
-    progressLabels['numFiles'].set(f"Transferred 0 / 0")
     sizeTransferedLabel = ttk.Label(storeFrm, textvariable=progressLabels["numFiles"])
     sizeTransferedLabel.grid(row=3, column=0, columnspan=2, sticky="ew", pady=10)
     
-    testLabel = ttk.Label(storeFrm, text="testing")
-    testLabel.grid()
+    # []% Complete
+    percentLabel = ttk.Label(storeFrm, textvariable=progressLabels["Percentage"])
+    percentLabel.grid(row=4, column=0, columnspan=2, sticky="ew", pady=10)
+    
+    
+    # Name: [Filename]
+    filenameLabel = ttk.Label(storeFrm, textvariable=progressLabels["Name"])
+    filenameLabel.grid(row=5, column=0, columnspan=2, sticky="ew", pady=10)
+    
+    # Stored 0b / 3.14 Gb
+    storeSizeLabel = ttk.Label(storeFrm, textvariable=progressLabels["sizeTransfered"])
+    storeSizeLabel.grid(row=6, column=0, columnspan=2, sticky="ew", pady=10)
+    
+    #Progress Bar
+    myProgressBar.grid(row=7, column=0)
 
 def storePage():
     global progressLabels
@@ -194,31 +276,52 @@ def storePage():
 
 ## RETRIEVE PAGE 
 # Retrieve Shows Button Function
-def retrieveShows(my_listbox):
+def retrieveShows(my_listbox, progressBar):
+    global retrieveAnimeMap
+    numFilesTransfered = 0
+    percentage = 0
+    sizeTransfered = 0
     dst = data['Phone Directory']
     dst = dst.replace("/", "\\")
+    
+    
     if my_listbox.curselection():
         for index in my_listbox.curselection():
             title = my_listbox.get(index)
+            storeData(title, retrieveAnimeMap[title])
+        totalSize = getTotalSize(my_listbox)
+        totalFiles = len(my_listbox.curselection())
+        
+        
+        progressLabels["Name"].set(f"Retrieving: ")
+        progressLabels["Percentage"].set(f"{percentage}% Completed")
+        progressLabels['numFiles'].set(f"Retrieved {numFilesTransfered} / {totalFiles} items")
+        progressLabels["sizeTransfered"].set(f"Retrieving 0b / {convert(totalSize)}")
+        
+        
+        for index in my_listbox.curselection():
+            title = my_listbox.get(index)
             titleDir = retrieveAnimeMap[title]
-            print("...............................................")
-            print("...............................................")
-            print("INFO")
-            print(f"TITLE: {title}")
-            print(f"DIRECTORY: {titleDir}")    
+            titleSize = showNumSize[title]
+            progressLabels["Name"].set(f"Storing: {title}")
+            
+            
             if titleDir.split('/')[-2] == data['PC Directory'].split('/')[-1]:
-                print(f"{title} is within the base PC Directory (Will be transfered to localanime)")
-                # PC Directory -> downloads -> source -> title
                 dst = os.path.join(dst, "localanime", retrieveAnimeMap[title].split('/')[-1])
             # we will assume our title is in a source within the downloads folder
-            
             else:
-                print(f"{title} was found within downloads/{retrieveAnimeMap[title].split('/')[-2]}")
-                
-                # We found out that its a local download can directly move
                 dst = os.path.join(dst, "downloads", retrieveAnimeMap[title].split('/')[-2], retrieveAnimeMap[title].split('/')[-1])
-            titleDir = os.path.normpath(titleDir)
+            
             shutil.move(titleDir, dst)
+
+            sizeTransfered = sizeTransfered + titleSize
+            percentage = (sizeTransfered / totalSize) * 100
+            numFilesTransfered = numFilesTransfered + 1
+            
+            progressLabels["sizeTransfered"].set(f"Retrieved {convert(sizeTransfered)} / {convert(totalSize)}")
+            progressLabels["Percentage"].set(f"{percentage}% Completed")
+            progressLabels['numFiles'].set(f"Retrieved {numFilesTransfered} / {totalFiles} items")
+            progressBar['value'] = percentage
             
         for index in reversed(my_listbox.curselection()):
             title = my_listbox.get(index)
@@ -265,6 +368,7 @@ def gridListbox(retrieveFrm):
 
 
 def populateRetrievePage(retrieveFrm, retrieveRoot):
+    myProgressBar = ttk.Progressbar(retrieveFrm, orient="horizontal", length=300, mode='determinate')
     
     # Get a Dictionary of shows
     getRetrieveShowMap()
@@ -275,6 +379,38 @@ def populateRetrievePage(retrieveFrm, retrieveRoot):
     # Button to retrieve shows
     retrieveButton = ttk.Button(retrieveFrm, text="Retrieve", command=lambda: retrieveShows(my_listbox))
     retrieveButton.grid(row=1, column=0)
+    
+        
+    # Have to make a progress Bar
+    myProgressBar = ttk.Progressbar(retrieveFrm, orient="horizontal", length=300, mode='determinate')
+    
+    
+    # Button to retrieve shows
+    storeButton = ttk.Button(retrieveFrm, text="Store", command=lambda: retrieveShows(my_listbox, myProgressBar))
+    storeButton.grid(row=1, column=0)
+    
+    # Separator for the progress bar
+    separator = ttk.Separator(retrieveFrm, orient="horizontal")
+    separator.grid(row=2, column=0, columnspan=2, sticky="ew", pady=10)
+    
+    sizeTransferedLabel = ttk.Label(retrieveFrm, textvariable=progressLabels["numFiles"])
+    sizeTransferedLabel.grid(row=3, column=0, columnspan=2, sticky="ew", pady=10)
+    
+    # []% Complete
+    percentLabel = ttk.Label(retrieveFrm, textvariable=progressLabels["Percentage"])
+    percentLabel.grid(row=4, column=0, columnspan=2, sticky="ew", pady=10)
+    
+    
+    # Name: [Filename]
+    filenameLabel = ttk.Label(retrieveFrm, textvariable=progressLabels["Name"])
+    filenameLabel.grid(row=5, column=0, columnspan=2, sticky="ew", pady=10)
+    
+    # Stored 0b / 3.14 Gb
+    storeSizeLabel = ttk.Label(retrieveFrm, textvariable=progressLabels["sizeTransfered"])
+    storeSizeLabel.grid(row=6, column=0, columnspan=2, sticky="ew", pady=10)
+    
+    #Progress Bar
+    myProgressBar.grid(row=7, column=0)
 
 
 # Open the Retrieve Page

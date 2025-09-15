@@ -18,6 +18,7 @@ from tkinter import messagebox
 from tkinter import Listbox
 import os
 import json
+import glob
 import shutil
 import os
 import re
@@ -160,61 +161,6 @@ def instantiate_checkpoint_files(urls):
     with open('downloaded already.txt', 'w') as f:
       pass
 
-def attach_cover(mkv_file, cover_image):
-    if os.path.exists(mkv_file):
-        if os.path.exists(cover_image):
-            base, ext = os.path.splitext(mkv_file)
-            output_file = f"{base}.withcover{ext}"
-            ffmpeg = r"D:\Programming\Tkinter exe\ffmpegDIr\ffmpeg.exe"
-            if os.path.exists(ffmpeg):
-                cmd = [
-                    ffmpeg,
-                    "-i", mkv_file,
-                    "-i", cover_image,
-                    "-map", "1",  # map all streams from mkv
-                    "-map", "0",  # map the cover image
-                    "-c", "copy",  # copy video/audio/subtitles
-                    "-disposition:v:0", "attached_pic",  # mark second video stream as attached picture
-                    output_file
-                ]
-
-                print("Running command:")
-                print(" ".join(cmd))
-                try:
-                    subprocess.run(cmd, check=True)
-                    print(f"Created new MKV with cover: {output_file}")
-                    if os.path.exists(mkv_file):
-                        os.remove(mkv_file)
-                        os.rename(output_file, mkv_file)
-                    return True
-                except subprocess.CalledProcessError as e:
-                    print("………………………………………………………………………………………………………")
-                    print(f"An error occurred: {e}")
-                    print(f"Something went wrong in the process of converting the thumbnail!")
-                    return False
-            else:
-                print("......................................")
-                print("......................................")
-                print("ERROR: Invalid ffmpeg directory")
-                print("......................................")
-                print("......................................")
-                return False
-        else:
-            print("......................................")
-            print("......................................")
-            print("ERROR: Invalid cover image directory!")
-            print("......................................")
-            print("......................................")
-            return False
-    else:
-        print("......................................")
-        print("......................................")
-        print("ERROR: Invalid mkv directory!")
-        print("......................................")
-        print("......................................")
-        return False
-        
-
 def getVideo(url, title):
     try:
         # Make path to new directory including video's title
@@ -232,7 +178,7 @@ def getVideo(url, title):
             '--ffmpeg-location', ffmpeg_dir,
             '--progress',
             '--no-playlist',
-            '--remux-video', 'mkv',
+            #'--remux-video', #'mkv',
             '--convert-thumbnails', 'jpg',
             '--write-thumbnail',
             '--embed-thumbnail',
@@ -256,17 +202,10 @@ def getVideo(url, title):
         # Change info.json file to be "details.json"
         if os.path.exists(f'{path}/details.info.json'):
             os.rename(f'{path}/details.info.json', f'{path}/details.json')
-            # TODO: Episode.json has not been made. Make it!!!
             filter_details(f'{path}/details.json', url, f'{path}/episode.json')
-            #return True
         else:
             print("No info file found.")
-            #return title
-        
-        # TODO: Make a return statement at the end of this function
-        mkv_file = os.path.join(path, title+".mkv")
-        cover_img = f'{path}/cover.jpg'
-        return attach_cover(mkv_file, cover_img)
+        return True
         
     except subprocess.CalledProcessError as e:
         print("………………………………………………………………………………………………………")

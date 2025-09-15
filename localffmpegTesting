@@ -1,0 +1,126 @@
+import requests
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+import time
+import yt_dlp
+import zipfile
+from PIL import Image
+from tkinter import *
+from tkinter import ttk
+import tkinter as tk
+from tkinter import filedialog
+from tkinter import font
+from tkinter import messagebox
+from tkinter import Listbox
+import os
+import json
+import shutil
+import os
+import re
+import subprocess
+import time
+from seleniumwire import webdriver
+#pip install blinker==1.4 #in case the import webdriver doesn't work
+from selenium.webdriver.firefox.options import Options
+
+
+INFOFILE = 'information.json'
+global root
+global frm
+global retrieveFrm
+global retrieveRoot
+global downloadRoot
+global storeRoot
+global storeFrm
+global progressRoot
+global progressFrm
+global downloadFrm
+global data
+global labels
+global progressLabels
+global retrieveAnimeMap
+global storeAnimeMap
+global showNumSize
+showNumSize = {}
+#root = Tk()
+#frm = ttk.Frame(root, padding=10)
+downloadRoot = Tk()
+downloadFrm = ttk.Frame(downloadRoot, padding=10)
+
+
+retrieveAnimeMap = {}
+storeAnimeMap = {}
+data = {
+            "PC Directory": "testing",
+            "PC Capacity": "testing",
+            "PC storage usage": "testing",
+            "Phone storage usage": "testing",
+            "Phone Directory": "testing",
+            "Phone Capacity": "testing",
+        }
+labels = {
+        "PC Directory": StringVar(),
+        "PC Storage Usage": StringVar(),
+        "Phone Directory": StringVar(),
+        "Phone Storage Usage": StringVar(),
+    }
+progressLabels = {
+    "Summary": StringVar(), # Transfering NUM files to DIRECTORY
+    "Percentage": StringVar(), # NUM% complete
+    "numFiles": StringVar(), # Transfering file NUM/TOTAL
+    "Name": StringVar(), # Name: NAME
+    "sizeTransfered": StringVar(), # Transfered NUM / TOTAL SIZE
+}
+
+
+
+def modifyMkv(file, cover_image):
+    #NEED
+        #ffmpeg
+        #The directory of the file I'm modifying
+        #The directory of the new file I'm creating
+        #directory of the png cover
+    ffmpeg = r"D:\Programming\Tkinter exe\ffmpegDIr\ffmpeg.exe"
+    base, ext = os.path.splitext(file)
+    output_file = f"{base}.withcover{ext}"
+    cmd = [
+        ffmpeg,
+        "-i", file,
+        "-i", cover_image,
+        "-map", "1",  # map all streams from mkv
+        "-map", "0",  # map the cover image
+        "-c", "copy",  # copy video/audio/subtitles
+        "-disposition:0", "attached_pic",  # mark second video stream as attached picture
+        output_file
+        #1 0 0 means audio ONLY on ph
+        #1 0 0 works on youtube!
+        #0 1 1 means no thumbnail update on youtube
+    ]
+
+    print("Running command:")
+    print(" ".join(cmd))
+    try:
+        subprocess.run(cmd, check=True)
+        print(f"Created new MKV with cover: {output_file}")
+        #if os.path.exists(file):
+            #os.remove(file)
+            #os.rename(output_file, file)
+        return True
+    except subprocess.CalledProcessError as e:
+        print("………………………………………………………………………………………………………")
+        print(f"An error occurred: {e}")
+        print(f"Something went wrong in the process of converting the thumbnail!")
+        return False
+    
+    
+
+
+
+modifyMkv(file, coverImg)
+
+
+

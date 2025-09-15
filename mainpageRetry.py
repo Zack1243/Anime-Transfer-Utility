@@ -58,7 +58,6 @@ progressLabels = {
     "sizeTransfered": StringVar(), # Transfered NUM / TOTAL SIZE
 }
 
-
 ## GENERAL FUNCTIONS
 # Set the Phone Directory
 def setPCDirectory():
@@ -366,7 +365,6 @@ def gridListbox(retrieveFrm):
         my_listbox.insert(0, show)
     return my_listbox
 
-
 def populateRetrievePage(retrieveFrm, retrieveRoot):
     myProgressBar = ttk.Progressbar(retrieveFrm, orient="horizontal", length=300, mode='determinate')
     
@@ -411,7 +409,6 @@ def populateRetrievePage(retrieveFrm, retrieveRoot):
     
     #Progress Bar
     myProgressBar.grid(row=7, column=0)
-
 
 # Open the Retrieve Page
 def retrievePage():
@@ -586,6 +583,14 @@ def populateDownloadPage(downloadFrm, downloadRoot):
     transferButton = Button(downloadRoot, text="Download", command=lambda: download(my_text))
     transferButton.grid(pady=20)
     
+    # Separator
+    
+    # Percentage button
+    
+    # Total size of the download
+    
+    # If it has failed or not 
+    
 def downloadPage():
     downloadRoot = Toplevel(root)
     downloadFrm = ttk.Frame(downloadRoot, padding=10)
@@ -645,10 +650,8 @@ def populateMainpage():
     # Column 2: Download Button
     downloadButton = ttk.Button(frm, text="Download", command=lambda: downloadPage())
     downloadButton.grid(row=3, column=2)
-    
-    
+     
 # Make the mainpage
-# Start the panel of tkinter
 def main():
     global data
     global labels

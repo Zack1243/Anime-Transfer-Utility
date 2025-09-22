@@ -4,6 +4,7 @@ import os
 import re
 import shutil
 import subprocess
+import curl_cffi
 import sys
 import time
 import yt_dlp
@@ -24,6 +25,8 @@ import os
 import re
 import subprocess
 import time
+import string
+import random
 from seleniumwire import webdriver
 #pip install blinker==1.4 #in case the import webdriver doesn't work
 from selenium.webdriver.firefox.options import Options
@@ -137,6 +140,7 @@ def getTitle(url):
         sys.executable, "-m", "yt_dlp",
         "--no-playlist",
         "--skip-download",
+        '--impersonate', 'chrome',
         "--get-title",
         url
     ], capture_output=True, text=True, check=True)
@@ -161,60 +165,133 @@ def instantiate_checkpoint_files(urls):
     with open('downloaded already.txt', 'w') as f:
       pass
 
+def generateTitle():
+    chars = string.ascii_letters + string.digits
+    return ''.join(random.choice(chars) for _ in range(10))
+
+
 def getVideo(url, title):
-    try:
-        # Make path to new directory including video's title
-        path = os.path.join(os.getcwd(), title)
-        print(f"Path of stored title: {path}")
-        print(f"Title: {title}")
-        ffmpeg_dir = os.path.join(os.getcwd(), "ffmpegDir")
-        
-        if os.path.exists(ffmpeg_dir):
-            print("found the ffmpeg Directory!")
-        else:
-            print("404 ERROR ffmpeg not found!")
-        subprocess.run([
-            sys.executable, "-m", "yt_dlp",
-            '--ffmpeg-location', ffmpeg_dir,
-            '--progress',
-            '--no-playlist',
-            #'--remux-video', #'mkv',
-            '--convert-thumbnails', 'jpg',
-            '--write-thumbnail',
-            '--embed-thumbnail',
-            '--embed-metadata',
-            '--write-info-json',
-            '--embed-chapters',
-            #'--embed subs',
-            '-f', 'bestvideo[height<=1080]+bestaudio/best[height<=1080]/best',
-            '-o', f'{path}\\{title}.%(ext)s',
-            '-o', f'thumbnail:{path}\\cover.%(ext)s',
-            '-o', f'infojson:{path}\\details.%(ext)s',
-            url
-        ])
-        
-        # Create empty .nomedia file
-        os.chdir(path)
-        with open('.nomedia', 'w') as makefile:
-            pass
-        os.chdir('..')
-        
-        # Change info.json file to be "details.json"
-        if os.path.exists(f'{path}/details.info.json'):
-            os.rename(f'{path}/details.info.json', f'{path}/details.json')
-            filter_details(f'{path}/details.json', url, f'{path}/episode.json')
-        else:
-            print("No info file found.")
-        return True
-        
-    except subprocess.CalledProcessError as e:
-        print("………………………………………………………………………………………………………")
-        print(f"An error occurred: {e}")
-        print(f"Failed to download url: {url}")
-        print("………………………………………………………………………………………………………")
-        with open('failed_downloads.txt', 'a') as f:
-          f.write(url + '\n')
-        return False
+    
+    if not title:
+        print("No title detected!")
+        try:
+            print(f"Url: {url}")
+
+            # Create Download Directory
+            title = "fuckshitbitch"
+            output_dir = os.path.join(os.getcwd(), title)
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir)
+
+            result = subprocess.run([
+                "cyberdrop-dl", "--download",
+                "--ignore-history",
+                # Change the output directory
+                "--download-folder", output_dir,
+                "--exclude-images",
+                "-j",
+                "--log-level", "10",
+                url
+                ], capture_output=True, text=True)
+            #if result.returncode != 0:
+                #print("Download failed:", result.stderr)
+                #return False
+
+            # look in the downloaded folder
+            video_exts = {".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv"}
+
+            folder = output_dir
+            print("starting the search!")
+            for file in os.listdir(folder):
+                print(f"Searching within the folder: {folder}")
+                print(f"Name of the file: {file}")
+                filePath = os.path.join(folder, file)
+                if os.path.isdir(filePath):
+                    print(f"this is the file shown to be a directory: {file}")
+                    folder = os.path.join(folder, file)
+                    for video in os.listdir(folder):
+                        print(f"found thing {video}")
+                        if os.path.splitext(video)[1].lower() in video_exts:
+                            title = os.path.splitext(video)[0]  # filename without extension
+                            print("Found video:", video, "| Title:", title)
+                            newDir = os.path.join(os.getcwd(), title)
+                            folder = os.path.join(folder, video)
+                            os.mkdir(newDir)
+                            shutil.move(folder, newDir)
+                            return True
+
+            if result.returncode == 0:
+                print("Download succeeded... by cyberdrop!")
+                return True
+            else:
+                print("Download failed:", result.stderr)
+                return False
+        except FileNotFoundError:
+            print("Failed to download via cyberdrop!")
+        except subprocess.CalledProcessError as e:
+            print(f"Failed to download: {e}")
+            return False
+    else:
+        try:
+            # Make path to new directory including video's title
+            path = os.path.join(os.getcwd(), title)
+            print(f"Path of stored title: {path}")
+            print(f"Title: {title}")
+            ffmpeg_dir = r"D:\Programming\ffmpegDIr"
+            
+            if os.path.exists(ffmpeg_dir):
+                print("found the ffmpeg Directory!")
+            else:
+                print("404 ERROR ffmpeg not found!")
+                
+            #if url.contains("bunkr", "")
+                
+                
+            subprocess.run([
+                sys.executable, "-m", "yt_dlp",
+                '--ffmpeg-location', ffmpeg_dir,
+                '--progress',
+                '--no-playlist',
+                #'--remux-video', 'mp4',
+                '--convert-thumbnails', 'jpg',
+                '--impersonate', 'firefox',
+                '--write-thumbnail',
+                '--embed-thumbnail',
+                '--embed-metadata',
+                '--write-info-json',
+                '--embed-chapters',
+                #'--embed subs',
+                '-f', 'bestvideo[height<=1080]+bestaudio/best[height<=1080]/best',
+                '-o', f'{path}\\{title}.%(ext)s',
+                '-o', f'thumbnail:{path}\\cover.%(ext)s',
+                '-o', f'infojson:{path}\\details.%(ext)s',
+                url
+            ])
+            if os.path.exists(path):
+                # Create empty .nomedia file
+                os.chdir(path)
+                with open('.nomedia', 'w') as makefile:
+                    pass
+                os.chdir('..')
+    
+                # Change info.json file to be "details.json"
+                if os.path.exists(f'{path}/details.info.json'):
+                    os.rename(f'{path}/details.info.json', f'{path}/details.json')
+                    filter_details(f'{path}/details.json', url, f'{path}/episode.json')
+                else:
+                    print("No info file found.")
+                return True
+            else:
+                return False
+            
+        except subprocess.CalledProcessError as e:
+            print("………………………………………………………………………………………………………")
+            print(f"An error occurred: {e}")
+            print(f"Failed to download url: {url}")
+            print("………………………………………………………………………………………………………")
+            with open('failed_downloads.txt', 'a') as f:
+              f.write(url + '\n')
+            return False
 
 def download(my_text):
 
@@ -249,7 +326,7 @@ def download(my_text):
             #if url not in completed and url not in failed and title + '.zip' not in zipped:
             if getVideo(url, title):
                 print("Downloaded the video!")
-                title = getTitle(url)
+                #title = getTitle(url)
                     #with open('completed.txt', 'a') as f:
                         #f.write(url + '\n')
             else:

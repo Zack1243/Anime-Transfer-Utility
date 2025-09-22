@@ -27,6 +27,7 @@ import time
 from seleniumwire import webdriver
 #pip install blinker==1.4 #in case the import webdriver doesn't work
 from selenium.webdriver.firefox.options import Options
+from mutagen.mp4 import MP4, MP4FreeForm
 
 INFOFILE = 'information.json'
 global root
@@ -101,6 +102,10 @@ def download(url):
             "--log-level", "10",
             url
             ], capture_output=True, text=True)
+        
+
+
+        
         # look in the downloaded folder
         video_exts = {".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv"}
 
@@ -115,6 +120,11 @@ def download(url):
                 folder = os.path.join(folder, file)
                 for video in os.listdir(folder):
                     print(f"found thing {video}")
+                    # Store in a freeform tag (custom)
+                    video["----:com.apple.iTunes:url"] = [MP4FreeForm(url.encode("utf-8"))]
+                    video.save()
+
+
                     if os.path.splitext(video)[1].lower() in video_exts:
                         title = os.path.splitext(video)[0]  # filename without extension
                         print("Found video:", video, "| Title:", title)

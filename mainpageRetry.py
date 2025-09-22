@@ -12,6 +12,15 @@ import subprocess
 import sys
 import math
 import re
+import requests
+import time
+import yt_dlp
+import zipfile
+from PIL import Image
+from seleniumwire import webdriver
+#pip install blinker==1.4 #in case the import webdriver doesn't work
+from selenium.webdriver.firefox.options import Options
+from mutagen.mp4 import MP4, MP4FreeForm
 
 INFOFILE = 'information.json'
 global root
@@ -473,6 +482,7 @@ def getTitle(url):
         sys.executable, "-m", "yt_dlp",
         "--no-playlist",
         "--skip-download",
+        '--impersonate', 'firefox',
         "--get-title",
         url
     ], capture_output=True, text=True, check=True)
@@ -501,7 +511,7 @@ def getVideo(url, title):
         print("No title detected!")
         try:
             print(f"Url: {url}")
-
+            print(f"Attempting to download through cyberdrop")
             # Create Download Directory
             title = "fuckshitbitch"
             output_dir = os.path.join(os.getcwd(), title)
@@ -514,12 +524,13 @@ def getVideo(url, title):
                 # Change the output directory
                 "--download-folder", output_dir,
                 "--exclude-images",
-                "-j",
+                #"-j",
                 "--log-level", "10",
                 url
                 ], capture_output=True, text=True)
-            #if result.returncode != 0:
-                #print("Download failed:", result.stderr)
+            if result.returncode != 0:
+                print("Download failed:", result.stderr)
+                print(result.stdout)
                 #return False
 
             # look in the downloaded folder
@@ -541,6 +552,9 @@ def getVideo(url, title):
                             print("Found video:", video, "| Title:", title)
                             newDir = os.path.join(os.getcwd(), title)
                             folder = os.path.join(folder, video)
+                            convVideo = MP4(folder)
+                            convVideo["----:com.apple.iTunes:url"] = [MP4FreeForm(url.encode("utf-8"))]
+                            convVideo.save()
                             os.mkdir(newDir)
                             shutil.move(folder, newDir)
                             return True
@@ -568,16 +582,13 @@ def getVideo(url, title):
                 print("found the ffmpeg Directory!")
             else:
                 print("404 ERROR ffmpeg not found!")
-                
-            #if url.contains("bunkr", "")
-                
-                
+                  
             subprocess.run([
                 sys.executable, "-m", "yt_dlp",
                 '--ffmpeg-location', ffmpeg_dir,
                 '--progress',
                 '--no-playlist',
-                #'--remux-video', 'mp4',
+                '--remux-video', 'mp4',
                 '--convert-thumbnails', 'jpg',
                 '--impersonate', 'firefox',
                 '--write-thumbnail',

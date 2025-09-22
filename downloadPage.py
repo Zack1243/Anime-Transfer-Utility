@@ -252,7 +252,7 @@ def getVideo(url, title):
                 '--ffmpeg-location', ffmpeg_dir,
                 '--progress',
                 '--no-playlist',
-                #'--remux-video', 'mp4',
+                '--remux-video', 'mp4',
                 '--convert-thumbnails', 'jpg',
                 '--impersonate', 'firefox',
                 '--write-thumbnail',

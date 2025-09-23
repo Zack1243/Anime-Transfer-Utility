@@ -14,13 +14,14 @@ import math
 import re
 import requests
 import time
-import yt_dlp
+from yt_dlp import YoutubeDL
 import zipfile
 from PIL import Image
 from seleniumwire import webdriver
 #pip install blinker==1.4 #in case the import webdriver doesn't work
 from selenium.webdriver.firefox.options import Options
 from mutagen.mp4 import MP4, MP4FreeForm
+import threading
 
 INFOFILE = 'information.json'
 global root
@@ -52,12 +53,14 @@ data = {
             "Phone storage usage": "testing",
             "Phone Directory": "testing",
             "Phone Capacity": "testing",
+            "FFMPEG": "testing"
         }
 labels = {
         "PC Directory": StringVar(),
         "PC Storage Usage": StringVar(),
         "Phone Directory": StringVar(),
         "Phone Storage Usage": StringVar(),
+        "FFMPEG": StringVar()
     }
 progressLabels = {
     "Summary": StringVar(), # Transfering NUM files to DIRECTORY
@@ -68,7 +71,6 @@ progressLabels = {
 }
 
 ## GENERAL FUNCTIONS
-# Set the Phone Directory
 def setPCDirectory():
     
     # Prompt user to select file location
@@ -77,14 +79,11 @@ def setPCDirectory():
     # Update JSON and data with file location
     data["PC Directory"] = folder_path
 
-        
     labels["PC Directory"].set(f"{data['PC Directory']}")
-
 
     with open(INFOFILE, 'w') as json_file:
         json.dump(data, json_file, indent=4)
 
-# Set the Phone Directory
 def setPhoneDirectory():
     
     # Prompt user to select file location
@@ -93,6 +92,17 @@ def setPhoneDirectory():
     data["Phone Directory"] = folder_path
 
     labels["Phone Directory"].set(f"{data['Phone Directory']}")
+
+    with open(INFOFILE, 'w') as json_file:
+        json.dump(data, json_file, indent=4)
+
+def setFFMPEGDirectory():
+    # Prompt user to select file location
+    folder_path = filedialog.askdirectory()
+    # Update JSON and data with file location
+    data["FFMPEG"] = folder_path
+
+    labels["FFMPEG"].set(f"{data['FFMPEG']}")
 
     with open(INFOFILE, 'w') as json_file:
         json.dump(data, json_file, indent=4)
@@ -168,7 +178,7 @@ def getStoreShowMap():
             localAnimeDir = [d for d in os.listdir(os.path.join(current_dir, title)) if os.path.isdir(os.path.join(current_dir, title))]
             for title in localAnimeDir:
                 storeAnimeMap[title] = str(f"{current_dir}/localanime/{title}")
-        
+
 def storeShows(my_listbox, progressBar):
     global storeAnimeMap
     numFilesTransfered = 0
@@ -438,7 +448,7 @@ def retrievePage():
 def filter_details(file, url, episode_file):
 
   # Get correct format options
-  with open(file, 'r') as f:
+  with open(file, 'r', encoding="utf-8") as f:
     data = json.load(f)
 
     # Get info for details.json file
@@ -466,12 +476,24 @@ def filter_details(file, url, episode_file):
     transformed_data["description"] = re.sub(url_pattern, '', transformed_data["description"])
 
     # Rewrite .json files WITH PROPER SYNTAX!!!
-    with open(file, 'w') as f:
+    with open(file, 'w', encoding="utf-8") as f:
       json.dump(transformed_data, f, indent=4)
 
     with open(episode_file, 'w') as f:
       json.dump(episode_data, f, indent=4)
   return
+
+def makeInfofiles(url, path):
+    os.chdir(path)
+    with open('.nomedia', 'w') as makefile:
+        pass
+    os.chdir('..')
+    # Change info.json file to be "details.json"
+    if os.path.exists(f'{path}/details.info.json'):
+        os.rename(f'{path}/details.info.json', f'{path}/details.json')
+        filter_details(f'{path}/details.json', url, f'{path}/episode.json')
+    else:
+        print("No info file found.")
 
 def getTitle(url):
   try:
@@ -489,6 +511,7 @@ def getTitle(url):
     
     # Extract the title from the result
     title = result.stdout.strip()
+    title = re.sub(r'[<>:"/\\|?*]', '_', title)
     print(title)
     return title
   except subprocess.CalledProcessError as e:
@@ -505,179 +528,208 @@ def instantiate_checkpoint_files(urls):
     with open('downloaded already.txt', 'w') as f:
       pass
 
-def getVideo(url, title):
-    
+def downloadProgress(process, downloadRoot, myProgressBar):
+    # Reading through stdout
+    for line in process:
+        #TODO: Start with using a video label -> thumbnail label
+        #TODO: Grab the size of the file being downloaded if possible
+        line = str(line).strip()
+        match = re.search(r"(\d+(?:\.\d+)?)%", line)
+        if match:
+            match2 = re.search(r'of\s+(\d+(?:\.\d+)?[KMG]iB)', line)
+            print(line)
+            percent = float(match.group(1))
+            myProgressBar["value"] = percent
+            myProgressBar.update_idletasks()
+            if match2:
+                filesize = match2.group(1)
+                # Get the int of the filesize
+                match3 = re.search(r"(\d+(?:\.\d+)?)", filesize)
+                number = float(match3.group(1))
+                curDownloaded = round(((percent*number)/100), 2)
+                sizeType = re.search(r"([KMG]iB)", filesize)
+                if sizeType:
+                    unit = sizeType.group(1)
+                    print(unit)  # MiB
+                    outputText = str(curDownloaded) + unit + "/" + filesize
+                    my_text = ttk.Label(downloadRoot, text=outputText)
+                    my_text.grid(row=5, column=0, columnspan=2, sticky="ew")
+                print(f"This is the current filesize: {filesize}")
+
+def cyberdropDL(url, title):
+    try:
+        title = "fuckshitbitch"
+        video_exts = {".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv"}
+        output_dir = os.path.join(os.getcwd(), title)
+        folder = output_dir
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        result = subprocess.run([
+            "cyberdrop-dl", "--download",
+            "--ignore-history",
+            "--download-folder", output_dir,
+            "--exclude-images",
+            #"-j",
+            "--log-level", "10",
+            url
+            ], capture_output=True, text=True)
+        if result.returncode != 0:
+            print("Download failed:", result.stderr)
+            print(result.stdout)
+            #return False
+        # look in the downloaded folder
+        
+        
+        for file in os.listdir(folder):
+            filePath = os.path.join(folder, file)
+            if os.path.isdir(filePath):
+                folder = os.path.join(folder, file)
+                for video in os.listdir(folder):
+                    if os.path.splitext(video)[1].lower() in video_exts:
+                        title = os.path.splitext(video)[0]
+                        newDir = os.path.join(os.getcwd(), title)
+                        folder = os.path.join(folder, video)
+                        convVideo = MP4(folder)
+                        convVideo["----:com.apple.iTunes:url"] = [MP4FreeForm(url.encode("utf-8"))]
+                        convVideo.save()
+                        os.mkdir(newDir)
+                        shutil.move(folder, newDir)
+                        return True
+        if result.returncode == 0:
+            print("Download succeeded... by cyberdrop!")
+            return True
+        else:
+            print("Download failed:", result.stderr)
+            return False
+    except FileNotFoundError:
+        print("Failed to download via cyberdrop!")
+    except subprocess.CalledProcessError as e:
+        print(f"Failed to download: {e}")
+        return False
+
+def ytDLP(downloadRoot, url, title, myProgressBar):
+    try:
+        path = os.path.join(os.getcwd(), title)
+        ffmpeg_dir = data["FFMPEG"]
+
+        print(f"Path of stored title: {path}")
+        print(f"Title: {title}")
+        
+        if not os.path.exists(ffmpeg_dir):
+            print(f"404 ERROR ffmpeg not found! {ffmpeg_dir}")
+              
+        process = subprocess.Popen([
+            sys.executable, "-m", "yt_dlp",
+            '--ffmpeg-location', ffmpeg_dir,
+            '--progress',
+            '--no-playlist',
+            '--remux-video', 'mp4',
+            '--convert-thumbnails', 'jpg',
+            '--impersonate', 'firefox',
+            '--write-thumbnail',
+            '--embed-thumbnail',
+            '--embed-metadata',
+            '--write-info-json',
+            '--embed-chapters',
+            '--newline',
+            '-v',
+            #'--embed subs',
+            '-f', 'bestvideo[height<=1080]+bestaudio/best[height<=1080]/best',
+            '-o', f'{path}\\{title}.%(ext)s',
+            '-o', f'thumbnail:{path}\\cover.%(ext)s',
+            '-o', f'infojson:{path}\\details.%(ext)s',
+            url
+
+        ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        
+        downloadProgress(process.stdout, downloadRoot, myProgressBar)
+
+
+        if os.path.exists(path):
+            makeInfofiles(url, path)
+            return True
+        
+        return False
+        
+    except subprocess.CalledProcessError as e:
+        print("………………………………………………………………………………………………………")
+        print(f"An error occurred: {e}")
+        print(f"Failed to download url: {url}")
+        print("………………………………………………………………………………………………………")
+        return False
+
+def getVideo(downloadRoot, url, title, myProgressBar):
     if not title:
         print("No title detected!")
-        try:
-            print(f"Url: {url}")
-            print(f"Attempting to download through cyberdrop")
-            # Create Download Directory
-            title = "fuckshitbitch"
-            output_dir = os.path.join(os.getcwd(), title)
-            if not os.path.exists(output_dir):
-                os.makedirs(output_dir)
-
-            result = subprocess.run([
-                "cyberdrop-dl", "--download",
-                "--ignore-history",
-                # Change the output directory
-                "--download-folder", output_dir,
-                "--exclude-images",
-                #"-j",
-                "--log-level", "10",
-                url
-                ], capture_output=True, text=True)
-            if result.returncode != 0:
-                print("Download failed:", result.stderr)
-                print(result.stdout)
-                #return False
-
-            # look in the downloaded folder
-            video_exts = {".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv"}
-
-            folder = output_dir
-            print("starting the search!")
-            for file in os.listdir(folder):
-                print(f"Searching within the folder: {folder}")
-                print(f"Name of the file: {file}")
-                filePath = os.path.join(folder, file)
-                if os.path.isdir(filePath):
-                    print(f"this is the file shown to be a directory: {file}")
-                    folder = os.path.join(folder, file)
-                    for video in os.listdir(folder):
-                        print(f"found thing {video}")
-                        if os.path.splitext(video)[1].lower() in video_exts:
-                            title = os.path.splitext(video)[0]  # filename without extension
-                            print("Found video:", video, "| Title:", title)
-                            newDir = os.path.join(os.getcwd(), title)
-                            folder = os.path.join(folder, video)
-                            convVideo = MP4(folder)
-                            convVideo["----:com.apple.iTunes:url"] = [MP4FreeForm(url.encode("utf-8"))]
-                            convVideo.save()
-                            os.mkdir(newDir)
-                            shutil.move(folder, newDir)
-                            return True
-
-            if result.returncode == 0:
-                print("Download succeeded... by cyberdrop!")
-                return True
-            else:
-                print("Download failed:", result.stderr)
-                return False
-        except FileNotFoundError:
-            print("Failed to download via cyberdrop!")
-        except subprocess.CalledProcessError as e:
-            print(f"Failed to download: {e}")
-            return False
+        return cyberdropDL(url, title)
     else:
-        try:
-            # Make path to new directory including video's title
-            path = os.path.join(os.getcwd(), title)
-            print(f"Path of stored title: {path}")
-            print(f"Title: {title}")
-            ffmpeg_dir = r"D:\Programming\ffmpegDIr"
-            
-            if os.path.exists(ffmpeg_dir):
-                print("found the ffmpeg Directory!")
+        return ytDLP(downloadRoot, url, title, myProgressBar)
+
+def download(my_text, downloadRoot, myProgressBar):
+
+    # Gather the contents of the textbox
+    content = my_text.get("1.0", "end-1c")
+    urls = [line for line in content.split("\n") if line.strip()]
+    urlVariableLabel = ttk.Label(downloadRoot, textvariable=urls)
+    urlVariableLabel.grid(pady=20)
+    x = 6
+    for url in urls:
+        # Get the video title
+        title = getTitle(url)
+        if title:
+            urlVariableLabel = Label(downloadRoot, text=f"Downloading: {title}")
+        else:
+            urlVariableLabel = Label(downloadRoot, text=f"Downloading: {url}")
+        urlVariableLabel.grid(row=x, column=0, sticky="w")
+        if getVideo(downloadRoot, url, title, myProgressBar):
+            if title:
+                urlVariableLabel = Label(downloadRoot, text=f"Succeessful download: {title}")
             else:
-                print("404 ERROR ffmpeg not found!")
-                  
-            subprocess.run([
-                sys.executable, "-m", "yt_dlp",
-                '--ffmpeg-location', ffmpeg_dir,
-                '--progress',
-                '--no-playlist',
-                '--remux-video', 'mp4',
-                '--convert-thumbnails', 'jpg',
-                '--impersonate', 'firefox',
-                '--write-thumbnail',
-                '--embed-thumbnail',
-                '--embed-metadata',
-                '--write-info-json',
-                '--embed-chapters',
-                #'--embed subs',
-                '-f', 'bestvideo[height<=1080]+bestaudio/best[height<=1080]/best',
-                '-o', f'{path}\\{title}.%(ext)s',
-                '-o', f'thumbnail:{path}\\cover.%(ext)s',
-                '-o', f'infojson:{path}\\details.%(ext)s',
-                url
-            ])
-            if os.path.exists(path):
-                # Create empty .nomedia file
-                os.chdir(path)
-                with open('.nomedia', 'w') as makefile:
-                    pass
-                os.chdir('..')
-    
-                # Change info.json file to be "details.json"
-                if os.path.exists(f'{path}/details.info.json'):
-                    os.rename(f'{path}/details.info.json', f'{path}/details.json')
-                    filter_details(f'{path}/details.json', url, f'{path}/episode.json')
-                else:
-                    print("No info file found.")
-                return True
+                urlVariableLabel = Label(downloadRoot, text=f"Succeessful download: {url}")
+            urlVariableLabel.grid(row=x, column=0, sticky="w")
+        else:
+            if title:
+                urlVariableLabel = Label(downloadRoot, text=f"Failed to download: {title}")
             else:
-                return False
-            
-        except subprocess.CalledProcessError as e:
-            print("………………………………………………………………………………………………………")
-            print(f"An error occurred: {e}")
-            print(f"Failed to download url: {url}")
-            print("………………………………………………………………………………………………………")
-            with open('failed_downloads.txt', 'a') as f:
-              f.write(url + '\n')
-            return False
+                urlVariableLabel = Label(downloadRoot, text=f"Failed to download: {url}")
+            urlVariableLabel.grid(row=x, column=1, sticky="w")
+        x = x + 1
 
-def download(my_text):
-
-        content = my_text.get("1.0", "end-1c")  # from line 1, char 0 to end (minus the auto newline)
-        urls = [line for line in content.split("\n") if line.strip()]
-
-        # Check if the infofiles have been instantiated
-        if not os.path.exists('urls.txt'):
-            instantiate_checkpoint_files(urls)
-
-        # Read Checkpoint files
-        with open('completed.txt', 'r') as f:
-          completed = f.read().splitlines()[:]
-        with open('failed_downloads.txt', 'r') as f:
-          failed = f.read().splitlines()[:]
-        with open('downloaded already.txt', 'r') as f:
-          zipped = f.read().splitlines()[:]
-    
-        for url in urls:
-            # Get the video title
-            title = getTitle(url)
-            if url not in completed and url not in failed and title + '.zip' not in zipped:
-              if getVideo(url, title):
-                title = getTitle(url)
-                with open('completed.txt', 'a') as f:
-                  f.write(url + '\n')
-            else:
-              print('SKIPPED: ' + title + '.zip')
-  
 def populateDownloadPage(downloadFrm, downloadRoot):
-    my_text = Text(downloadRoot, width=60, height=20)
+    my_text = Text(downloadRoot, width=40, height=15)
     my_text.grid(pady=20)
+
+    # Progress Bar
+    myProgressBar = ttk.Progressbar(downloadRoot, orient="horizontal", length=300, mode="determinate", maximum=100)
     
-    transferButton = Button(downloadRoot, text="Download", command=lambda: download(my_text))
+    
+    transferButton = Button(downloadRoot, text="Download", command=lambda: threading.Thread(
+            target=download,
+            args=(my_text, downloadRoot, myProgressBar),
+            daemon=True
+        ).start()
+        )
     transferButton.grid(pady=20)
     
     # Separator
-    
-    # Percentage button
-    
-    # Total size of the download
-    
-    # If it has failed or not 
-    
+    separator = ttk.Separator(downloadRoot, orient="horizontal")
+    separator.grid(row=3, column=0, columnspan=2, sticky="ew")
+
+    # Progress Bar
+    myProgressBar.grid(row=4, column=0, columnspan=2, sticky="ew")
+
+    placeholderLabel1 = ttk.Label(downloadRoot, text="")
+    placeholderLabel1.grid(row=5, column=0)
+
+    placeholderLabel2 = ttk.Label(downloadRoot, text="")
+    placeholderLabel2.grid(row=6, column=0)
+
 def downloadPage():
     downloadRoot = Toplevel(root)
     downloadFrm = ttk.Frame(downloadRoot, padding=10)
     downloadFrm.grid()
-    app_width = 600
-    app_height = 500
+    app_width = 800
+    app_height = 800
     screen_width = downloadRoot.winfo_screenwidth()
     screen_height = downloadRoot.winfo_screenheight()
     x = (screen_width / 2) - (app_width / 2)
@@ -705,7 +757,6 @@ def populateMainpage():
     phoneDirectoryVariableLabel = ttk.Label(frm, textvariable=labels["Phone Directory"])
     phoneDirectoryVariableLabel.grid(row=1, column=2)
     
-    
     # Line 3
     # Column 0: Set PC Directory Label
     pcDirectoryLabel = ttk.Label(frm, text="Set PC Directory")
@@ -718,19 +769,32 @@ def populateMainpage():
     # Column 2: PC Directory
     pcDirectoryVariableLabel = ttk.Label(frm, textvariable=labels["PC Directory"])
     pcDirectoryVariableLabel.grid(row=2, column=2)
-    
+
     # Line 4
+    # Column 0: Set FFMPEG Directory Label
+    ffmpegDirectoryLabel = ttk.Label(frm, text="Set FFMPEG Directory")
+    ffmpegDirectoryLabel.grid(row=3, column=0)
+    
+    # Column 1: Set FFMPEG Directory Button
+    ffmpegDirectoryButton = ttk.Button(frm, text="...", command=lambda: setFFMPEGDirectory())
+    ffmpegDirectoryButton.grid(row=3, column=1)
+    
+    # Column 2: FFMPEG Directory
+    ffmpegDirectoryVariableLabel = ttk.Label(frm, textvariable=labels["FFMPEG"])
+    ffmpegDirectoryVariableLabel.grid(row=3, column=2)
+
+    # Line 5
     # Column 0: Retrieve Button
     retrieveButton = ttk.Button(frm, text="Retrieve", command=lambda: retrievePage())
-    retrieveButton.grid(row=3, column=0)
+    retrieveButton.grid(row=4, column=0)
     
     # Column 1: Store Button
     storeButton = ttk.Button(frm, text="Store", command=lambda: storePage())
-    storeButton.grid(row=3, column=1)
+    storeButton.grid(row=4, column=1)
     
     # Column 2: Download Button
     downloadButton = ttk.Button(frm, text="Download", command=lambda: downloadPage())
-    downloadButton.grid(row=3, column=2)
+    downloadButton.grid(row=4, column=2)
      
 # Make the mainpage
 def main():
@@ -755,8 +819,10 @@ def main():
             data["Phone Directory"] = dataValues["Phone Directory"]
             data["Phone Capacity"] = dataValues["Phone Capacity"]
             data["Phone storage usage"] = dataValues["Phone storage usage"]
+            data["FFMPEG"] = dataValues["FFMPEG"]
             labels["Phone Directory"].set(f"{dataValues['Phone Directory']}")
             labels["PC Directory"].set(f"{dataValues['PC Directory']}")
+            labels["FFMPEG"].set(f"{dataValues['FFMPEG']}")
             
     # Cannot find INFOFILE. Create and populate with random data
     else:
@@ -767,6 +833,7 @@ def main():
             "Phone storage usage": "testing",
             "Phone Directory": "testing",
             "Phone Capacity": "testing",
+            "FFMPEG": "testing"
         }
         with open(INFOFILE, 'w') as json_file:
             json.dump(labels, json_file, indent=4)

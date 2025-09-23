@@ -1,0 +1,250 @@
+[09/23/25 10:11:11] DEBUG    Using Debug Log: C:\Users\[REDACTED]\AppData\Local\Programs\Python\Python313\Lib\site-packages\cyberdrop_dl_debug.log
+                    DEBUG    Starting Async Processes...
+                    DEBUG    Starting Cyberdrop-DL Process
+                             Running Version: 7.5.0
+                             System Info: {
+                                 "system": "Windows",
+                                 "release": "11",
+                                 "version": "10.0.26100",
+                                 "machine": "AMD64",
+                                 "processor": "Intel64 Family 6 Model 158 Stepping 12, GenuineIntel",
+                                 "architecture": "('64bit', 'WindowsPE')",
+                                 "python": "3.13.7 CPython",
+                                 "common_name": "Windows 11 Enterprise"
+                             }
+                             Using Config: Default
+                             Using Config File: D:\Programming\Tkinter exe\AppData\Configs\Default\settings.yaml
+                             Using Input File: D:\Programming\Tkinter exe\AppData\Configs\Default\URLs.txt
+                             Using Download Folder: D:\Programming\Tkinter exe\fuckshitbitch
+                             Using Database File: D:\Programming\Tkinter exe\AppData\Cache\cyberdrop.db
+                             Using CLI only options: {
+                                 "links": [
+                                     "https://www.youtube.com/watch?v=F6ikCpchLbs"
+                                 ],
+                                 "appdata_folder": null,
+                                 "completed_after": null,
+                                 "completed_before": null,
+                                 "config": null,
+                                 "config_file": null,
+                                 "disable_cache": false,
+                                 "download": true,
+                                 "download_dropbox_folders_as_zip": false,
+                                 "download_tiktok_audios": false,
+                                 "max_items_retry": 0,
+                                 "portrait": false,
+                                 "print_stats": true,
+                                 "retry_all": false,
+                                 "retry_failed": false,
+                                 "retry_maintenance": false,
+                                 "show_supported_sites": false,
+                                 "ui": "fullscreen",
+                                 "__computed__": {
+                                     "retry_any": false,
+                                     "fullscreen_ui": true,
+                                     "multiconfig": false
+                                 }
+                             }
+                             Using Authentication:
+                             {
+                                 "coomer": false,
+                                 "gofile": false,
+                                 "imgur": false,
+                                 "jdownloader": false,
+                                 "kemono": false,
+                                 "meganz": false,
+                                 "pixeldrain": false,
+                                 "realdebrid": false,
+                                 "reddit": false
+                             }
+                             Using Settings:
+                             {
+                                 "browser_cookies": {
+                                     "auto_import": false,
+                                     "browser": "firefox",
+                                     "sites": [
+                                         "<<ALL_SUPPORTED_SITES>>"
+                                     ]
+                                 },
+                                 "download_options": {
+                                     "block_download_sub_folders": false,
+                                     "disable_download_attempt_limit": false,
+                                     "disable_file_timestamps": false,
+                                     "include_album_id_in_folder_name": false,
+                                     "include_thread_id_in_folder_name": false,
+                                     "maximum_number_of_children": [],
+                                     "remove_domains_from_folder_names": false,
+                                     "remove_generated_id_from_filenames": false,
+                                     "scrape_single_forum_post": false,
+                                     "separate_posts_format": "{default}",
+                                     "separate_posts": false,
+                                     "skip_download_mark_completed": false,
+                                     "skip_referer_seen_before": false,
+                                     "maximum_thread_depth": 0
+                                 },
+                                 "dupe_cleanup_options": {
+                                     "add_md5_hash": false,
+                                     "add_sha256_hash": false,
+                                     "auto_dedupe": true,
+                                     "hashing": "in_place",
+                                     "send_deleted_to_trash": true
+                                 },
+                                 "file_size_limits": {
+                                     "maximum_image_size": "0B",
+                                     "maximum_other_size": "0B",
+                                     "maximum_video_size": "0B",
+                                     "minimum_image_size": "0B",
+                                     "minimum_other_size": "0B",
+                                     "minimum_video_size": "0B"
+                                 },
+                                 "media_duration_limits": {
+                                     "maximum_video_duration": "PT0S",
+                                     "maximum_audio_duration": "PT0S",
+                                     "minimum_video_duration": "PT0S",
+                                     "minimum_audio_duration": "PT0S"
+                                 },
+                                 "files": {
+                                     "download_folder": "D:\\Programming\\Tkinter exe\\fuckshitbitch",
+                                     "dump_json": false,
+                                     "input_file": "D:\\Programming\\Tkinter exe\\AppData\\Configs\\Default\\URLs.txt",
+                                     "save_pages_html": false
+                                 },
+                                 "ignore_options": {
+                                     "exclude_audio": false,
+                                     "exclude_images": true,
+                                     "exclude_other": false,
+                                     "exclude_videos": false,
+                                     "filename_regex_filter": null,
+                                     "ignore_coomer_ads": false,
+                                     "only_hosts": [],
+                                     "skip_hosts": [],
+                                     "exclude_files_with_no_extension": true
+                                 },
+                                 "logs": {
+                                     "download_error_urls": "Download_Error_URLs.csv",
+                                     "last_forum_post": "Last_Scraped_Forum_Posts.csv",
+                                     "log_folder": "D:\\Programming\\Tkinter exe\\AppData\\Configs\\Default\\Logs",
+                                     "log_line_width": 240,
+                                     "logs_expire_after": null,
+                                     "main_log": "downloader.log",
+                                     "rotate_logs": false,
+                                     "scrape_error_urls": "Scrape_Error_URLs.csv",
+                                     "unsupported_urls": "Unsupported_URLs.csv",
+                                     "webhook": null
+                                 },
+                                 "runtime_options": {
+                                     "console_log_level": 100,
+                                     "deep_scrape": false,
+                                     "delete_partial_files": false,
+                                     "ignore_history": true,
+                                     "jdownloader_autostart": false,
+                                     "jdownloader_download_dir": null,
+                                     "jdownloader_whitelist": [],
+                                     "log_level": 10,
+                                     "send_unsupported_to_jdownloader": false,
+                                     "skip_check_for_empty_folders": false,
+                                     "skip_check_for_partial_files": false,
+                                     "slow_download_speed": "0B",
+                                     "update_last_forum_post": true
+                                 },
+                                 "sorting": {
+                                     "scan_folder": null,
+                                     "sort_downloads": false,
+                                     "sort_folder": "D:\\Programming\\Tkinter exe\\Downloads\\Cyberdrop-DL Sorted Downloads",
+                                     "sort_incrementer_format": "({i})",
+                                     "sorted_audio": "{sort_dir}/{base_dir}/Audio/{filename}{ext}",
+                                     "sorted_image": "{sort_dir}/{base_dir}/Images/{filename}{ext}",
+                                     "sorted_other": "{sort_dir}/{base_dir}/Other/{filename}{ext}",
+                                     "sorted_video": "{sort_dir}/{base_dir}/Videos/{filename}{ext}"
+                                 }
+                             }
+                             Using Global Settings:
+                             {
+                                 "general": {
+                                     "ssl_context": "truststore+certifi",
+                                     "disable_crawlers": [],
+                                     "enable_generic_crawler": true,
+                                     "flaresolverr": null,
+                                     "max_file_name_length": 95,
+                                     "max_folder_name_length": 60,
+                                     "proxy": null,
+                                     "required_free_space": "5.0GB",
+                                     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0"
+                                 },
+                                 "rate_limiting_options": {
+                                     "connection_timeout": 15,
+                                     "download_attempts": 5,
+                                     "download_delay": 0.5,
+                                     "download_speed_limit": "0B",
+                                     "file_host_cache_expire_after": "P7D",
+                                     "forum_cache_expire_after": "P28D",
+                                     "jitter": 0.0,
+                                     "max_simultaneous_downloads_per_domain": 3,
+                                     "max_simultaneous_downloads": 15,
+                                     "rate_limit": 50,
+                                     "read_timeout": 300
+                                 },
+                                 "ui_options": {
+                                     "downloading_item_limit": 5,
+                                     "refresh_rate": 10,
+                                     "scraping_item_limit": 5,
+                                     "vi_mode": false
+                                 },
+                                 "generic_crawlers_instances": {
+                                     "wordpress_media": [],
+                                     "wordpress_html": [],
+                                     "discourse": [],
+                                     "chevereto": []
+                                 }
+                             }
+                             Using ffmpeg version: None
+                             Using ffprobe version: git-2019-10-19-ed78ca4
+                    DEBUG    --------------------------------------------------
+                    INFO     Starting CDL...
+                             
+                    DEBUG    Skipping https://www.youtube.com/watch?v=F6ikCpchLbs as it is a blocked domain
+                    WARNING  No valid links found.
+                    INFO     --------------------------------------------------
+                    INFO     Running Post-Download Processes For Config: Default
+                    INFO     Checking for partial downloads...
+                    INFO     Checking for empty folders...
+                    INFO     --------------------------------------------------
+                    INFO     Printing Stats...
+                             
+                    INFO     Run Stats (config: Default)
+                    INFO       Input File: --links (CLI args)
+                    INFO       Input URLs: 0
+                    INFO       Input URL Groups: 0
+                    INFO       Log Folder: D:\Programming\Tkinter exe\AppData\Configs\Default\Logs
+                    INFO       Total Runtime: 0:00:00
+                    INFO       Total Downloaded Data: 0B
+                    INFO     
+                    INFO     Download Stats:
+                    INFO       Downloaded: 0 files
+                    INFO       Skipped (By Config): 0 files
+                    INFO       Skipped (Previously Downloaded): 0 files
+                    INFO       Failed: 0 files
+                    INFO     
+                    INFO     Unsupported URLs Stats:
+                    INFO       Sent to Jdownloader: 0
+                    INFO       Skipped: 0
+                    INFO     
+                    INFO     Dupe Stats:
+                    INFO       Newly Hashed: 0 files
+                    INFO       Previously Hashed: 0 files
+                    INFO       Removed (Downloads): 0 files
+                    INFO     
+                    INFO     Sort Stats:
+                    INFO       Audios: 0
+                    INFO       Images: 0
+                    INFO       Videos: 0
+                    INFO       Other Files: 0
+                    INFO     
+                    INFO     Scrape Failures:
+                    INFO       None
+                    INFO     
+                    INFO     Download Failures:
+                    INFO       None
+                    INFO     --------------------------------------------------
+                    INFO     Checking for Updates...
+[09/23/25 10:11:12] INFO     You are currently on the latest version of Cyberdrop-DL ✅
+                    CRITICAL An error occurred, please report this to the developer with your logs file:
